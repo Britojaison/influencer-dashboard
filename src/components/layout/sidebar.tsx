@@ -9,7 +9,7 @@ import {
   Users,
   Calendar,
   Settings,
-  Brand,
+  Building2,
   TrendingUp,
   Menu,
   X,
@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: BarChart3 },
-  { name: "Brands", href: "/brands", icon: Brand },
+  { name: "Brands", href: "/brands", icon: Building2 },
   { name: "Campaigns", href: "/campaigns", icon: Calendar },
   { name: "Influencers", href: "/influencers", icon: Users },
   { name: "Analytics", href: "/analytics", icon: TrendingUp },
