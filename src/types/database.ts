@@ -3,6 +3,8 @@ export interface Brand {
   name: string;
   logo_url?: string;
   description?: string;
+  website_url?: string;
+  industry?: string;
   created_at: string;
   updated_at: string;
 }
@@ -14,11 +16,47 @@ export interface Campaign {
   description?: string;
   start_date: string;
   end_date: string;
-  status: 'active' | 'completed' | 'draft';
+  status: 'draft' | 'active' | 'completed' | 'paused';
   budget?: number;
+  target_audience?: string;
+  goals?: string;
   created_at: string;
   updated_at: string;
   brand?: Brand;
+}
+
+export interface CampaignAnalytics {
+  id: string;
+  campaign_id: string;
+  total_reach: number;
+  total_engagement: number;
+  total_impressions: number;
+  total_clicks: number;
+  conversion_rate: number;
+  roi: number;
+  tracked_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CampaignInfluencerDetail {
+  id: string;
+  campaign_id: string;
+  name: string;
+  platform: 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'facebook' | 'linkedin';
+  username: string;
+  content_type?: string;
+  post_url?: string;
+  likes: number;
+  comments: number;
+  shares: number;
+  views: number;
+
+  followers_count: number;
+  status: 'active' | 'inactive' | 'completed';
+  notes?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Influencer {
@@ -33,7 +71,7 @@ export interface Influencer {
     twitter?: string;
   };
   followers_count?: number;
-  engagement_rate?: number;
+
   created_at: string;
   updated_at: string;
 }
@@ -70,10 +108,10 @@ export interface Post {
 export interface DashboardStats {
   total_brands: number;
   total_campaigns: number;
-  total_influencers: number;
-  total_posts: number;
-  total_engagement: number;
-  total_reach: number;
+  active_campaigns: number;
+  completed_campaigns: number;
+  total_budget: number;
+  average_roi: number;
 }
 
 export interface DateRange {

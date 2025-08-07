@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,78 +24,101 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Search, Filter } from "lucide-react";
+import { 
+  Plus, 
+  Edit, 
+  Trash2, 
+  Search, 
+  Building2,
+  Globe,
+  Users
+} from "lucide-react";
 import { Brand } from "@/types/database";
-
-// Mock data - replace with actual data from Supabase
-const mockBrands: Brand[] = [
-  {
-    id: "1",
-    name: "Fashion Brand A",
-    description: "Premium fashion and lifestyle brand",
-    logo_url: "/logos/brand-a.png",
-    created_at: "2024-01-15T10:00:00Z",
-    updated_at: "2024-06-01T15:30:00Z",
-  },
-  {
-    id: "2",
-    name: "Tech Brand B",
-    description: "Innovative technology solutions",
-    logo_url: "/logos/brand-b.png",
-    created_at: "2024-02-20T14:00:00Z",
-    updated_at: "2024-05-28T09:15:00Z",
-  },
-  {
-    id: "3",
-    name: "Lifestyle Brand C",
-    description: "Health and wellness products",
-    logo_url: "/logos/brand-c.png",
-    created_at: "2024-03-10T11:00:00Z",
-    updated_at: "2024-06-05T16:45:00Z",
-  },
-];
+import { getBrands, createBrand, updateBrand, deleteBrand } from "@/lib/database";
 
 export default function BrandsPage() {
-  const [brands, setBrands] = useState<Brand[]>(mockBrands);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [campaignCounts, setCampaignCounts] = useState<{ [key: string]: number }>({});
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    logo_url: "",
+    website_url: "",
+    industry: "",
   });
 
+  // Load data from database
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [brandsData, campaignCountsData] = await Promise.all([
+          getBrands(),
+          fetch('/api/brands/campaign-counts').then(res => res.json())
+        ]);
+        setBrands(brandsData);
+        setCampaignCounts(campaignCountsData);
+      } catch (error) {
+        console.error('Error loading brands:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
   const filteredBrands = brands.filter((brand) =>
-    brand.name.toLowerCase().includes(searchTerm.toLowerCase())
+    brand.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    brand.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    brand.industry?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleCreateBrand = () => {
-    const newBrand: Brand = {
-      id: Date.now().toString(),
-      ...formData,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    setBrands([...brands, newBrand]);
-    setFormData({ name: "", description: "", logo_url: "" });
-    setIsCreateDialogOpen(false);
+  const handleCreateBrand = async () => {
+    try {
+      const newBrand = await createBrand(formData);
+      setBrands([newBrand, ...brands]);
+      setFormData({
+        name: "",
+        description: "",
+        website_url: "",
+        industry: "",
+      });
+      setIsCreateDialogOpen(false);
+    } catch (error) {
+      console.error('Error creating brand:', error);
+    }
   };
 
-  const handleEditBrand = () => {
+  const handleEditBrand = async () => {
     if (!editingBrand) return;
-    const updatedBrands = brands.map((brand) =>
-      brand.id === editingBrand.id
-        ? { ...brand, ...formData, updated_at: new Date().toISOString() }
-        : brand
-    );
-    setBrands(updatedBrands);
-    setEditingBrand(null);
-    setFormData({ name: "", description: "", logo_url: "" });
+    try {
+      const updatedBrand = await updateBrand(editingBrand.id, formData);
+      setBrands(brands.map((brand) =>
+        brand.id === editingBrand.id ? updatedBrand : brand
+      ));
+      setEditingBrand(null);
+      setFormData({
+        name: "",
+        description: "",
+        website_url: "",
+        industry: "",
+      });
+    } catch (error) {
+      console.error('Error updating brand:', error);
+    }
   };
 
-  const handleDeleteBrand = (id: string) => {
-    setBrands(brands.filter((brand) => brand.id !== id));
+  const handleDeleteBrand = async (id: string) => {
+    try {
+      await deleteBrand(id);
+      setBrands(brands.filter((brand) => brand.id !== id));
+    } catch (error) {
+      console.error('Error deleting brand:', error);
+    }
   };
 
   const openEditDialog = (brand: Brand) => {
@@ -103,33 +126,45 @@ export default function BrandsPage() {
     setFormData({
       name: brand.name,
       description: brand.description || "",
-      logo_url: brand.logo_url || "",
+      website_url: brand.website_url || "",
+      industry: brand.industry || "",
     });
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading brands...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Brands</h1>
-          <p className="text-gray-600">Manage all your brand partnerships</p>
+          <p className="text-gray-600">Manage your brand partnerships</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Add Brand
+              New Brand
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Add New Brand</DialogTitle>
               <DialogDescription>
-                Create a new brand profile for your influencer campaigns.
+                Add a new brand to your influencer dashboard.
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
                 <Label htmlFor="name">Brand Name</Label>
                 <Input
                   id="name"
@@ -138,7 +173,7 @@ export default function BrandsPage() {
                   placeholder="Enter brand name"
                 />
               </div>
-              <div>
+              <div className="col-span-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
@@ -148,12 +183,21 @@ export default function BrandsPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="logo_url">Logo URL</Label>
+                <Label htmlFor="website_url">Website URL</Label>
                 <Input
-                  id="logo_url"
-                  value={formData.logo_url}
-                  onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                  placeholder="Enter logo URL"
+                  id="website_url"
+                  value={formData.website_url}
+                  onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
+                  placeholder="https://example.com"
+                />
+              </div>
+              <div>
+                <Label htmlFor="industry">Industry</Label>
+                <Input
+                  id="industry"
+                  value={formData.industry}
+                  onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                  placeholder="e.g., Fashion, Technology"
                 />
               </div>
             </div>
@@ -161,29 +205,23 @@ export default function BrandsPage() {
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleCreateBrand}>Create Brand</Button>
+              <Button onClick={handleCreateBrand}>Add Brand</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Search and Filters */}
+      {/* Search */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search brands..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Button variant="outline">
-              <Filter className="h-4 w-4 mr-2" />
-              Filter
-            </Button>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search brands..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
         </CardContent>
       </Card>
@@ -201,9 +239,9 @@ export default function BrandsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Brand</TableHead>
-                <TableHead>Description</TableHead>
+                <TableHead>Industry</TableHead>
+                <TableHead>Website</TableHead>
                 <TableHead>Campaigns</TableHead>
-                <TableHead>Created</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -211,36 +249,35 @@ export default function BrandsPage() {
               {filteredBrands.map((brand) => (
                 <TableRow key={brand.id}>
                   <TableCell>
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                        {brand.logo_url ? (
-                          <img
-                            src={brand.logo_url}
-                            alt={brand.name}
-                            className="w-8 h-8 rounded"
-                          />
-                        ) : (
-                          <span className="text-gray-500 font-medium">
-                            {brand.name.charAt(0)}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <div className="font-medium">{brand.name}</div>
+                    <div>
+                      <div className="font-medium">{brand.name}</div>
+                      <div className="text-sm text-gray-500 max-w-xs truncate">
+                        {brand.description}
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="max-w-xs truncate text-gray-600">
-                      {brand.description || "No description"}
-                    </div>
+                    {brand.industry && (
+                      <Badge variant="secondary">{brand.industry}</Badge>
+                    )}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">3 campaigns</Badge>
+                    {brand.website_url && (
+                      <a
+                        href={brand.website_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center text-blue-600 hover:text-blue-800"
+                      >
+                        <Globe className="h-4 w-4 mr-1" />
+                        Visit
+                      </a>
+                    )}
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm text-gray-500">
-                      {new Date(brand.created_at).toLocaleDateString()}
+                    <div className="flex items-center space-x-1">
+                      <Users className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm">{campaignCounts[brand.id] || 0}</span>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -255,15 +292,15 @@ export default function BrandsPage() {
                             <Edit className="h-4 w-4" />
                           </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="max-w-2xl">
                           <DialogHeader>
                             <DialogTitle>Edit Brand</DialogTitle>
                             <DialogDescription>
                               Update brand information.
                             </DialogDescription>
                           </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="col-span-2">
                               <Label htmlFor="edit-name">Brand Name</Label>
                               <Input
                                 id="edit-name"
@@ -272,7 +309,7 @@ export default function BrandsPage() {
                                 placeholder="Enter brand name"
                               />
                             </div>
-                            <div>
+                            <div className="col-span-2">
                               <Label htmlFor="edit-description">Description</Label>
                               <Textarea
                                 id="edit-description"
@@ -282,12 +319,21 @@ export default function BrandsPage() {
                               />
                             </div>
                             <div>
-                              <Label htmlFor="edit-logo_url">Logo URL</Label>
+                              <Label htmlFor="edit-website_url">Website URL</Label>
                               <Input
-                                id="edit-logo_url"
-                                value={formData.logo_url}
-                                onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                                placeholder="Enter logo URL"
+                                id="edit-website_url"
+                                value={formData.website_url}
+                                onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
+                                placeholder="https://example.com"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="edit-industry">Industry</Label>
+                              <Input
+                                id="edit-industry"
+                                value={formData.industry}
+                                onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                                placeholder="e.g., Fashion, Technology"
                               />
                             </div>
                           </div>

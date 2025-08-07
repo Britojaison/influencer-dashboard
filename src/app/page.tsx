@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,105 +13,105 @@ import {
   Heart, 
   MessageCircle, 
   Share2,
-  Plus 
+  Plus,
+  DollarSign
 } from "lucide-react";
 import Link from "next/link";
-
-// Mock data - replace with actual data from Supabase
-const stats = [
-  {
-    title: "Total Brands",
-    value: "6",
-    icon: BarChart3,
-    description: "Active brands",
-  },
-  {
-    title: "Active Campaigns",
-    value: "12",
-    icon: Calendar,
-    description: "Running campaigns",
-  },
-  {
-    title: "Total Influencers",
-    value: "48",
-    icon: Users,
-    description: "Registered influencers",
-  },
-  {
-    title: "Total Engagement",
-    value: "2.4M",
-    icon: TrendingUp,
-    description: "Likes, comments, shares",
-  },
-];
-
-const recentCampaigns = [
-  {
-    id: "1",
-    name: "Summer Collection Launch",
-    brand: "Fashion Brand A",
-    status: "active",
-    influencers: 8,
-    posts: 24,
-    engagement: "156K",
-    startDate: "2024-06-01",
-    endDate: "2024-08-31",
-  },
-  {
-    id: "2",
-    name: "Product Launch Campaign",
-    brand: "Tech Brand B",
-    status: "active",
-    influencers: 5,
-    posts: 15,
-    engagement: "89K",
-    startDate: "2024-06-15",
-    endDate: "2024-07-15",
-  },
-  {
-    id: "3",
-    name: "Holiday Promotion",
-    brand: "Lifestyle Brand C",
-    status: "completed",
-    influencers: 12,
-    posts: 36,
-    engagement: "234K",
-    startDate: "2024-05-01",
-    endDate: "2024-05-31",
-  },
-];
-
-const recentPosts = [
-  {
-    id: "1",
-    influencer: "@fashionista_emma",
-    platform: "Instagram",
-    likes: 1240,
-    comments: 89,
-    shares: 23,
-    postedAt: "2 hours ago",
-  },
-  {
-    id: "2",
-    influencer: "@tech_reviewer",
-    platform: "TikTok",
-    likes: 8900,
-    comments: 234,
-    shares: 156,
-    postedAt: "4 hours ago",
-  },
-  {
-    id: "3",
-    influencer: "@lifestyle_guru",
-    platform: "YouTube",
-    likes: 5600,
-    comments: 189,
-    shares: 67,
-    postedAt: "1 day ago",
-  },
-];
+import { getDashboardStats, getCampaigns } from "@/lib/database";
+import { DashboardStats, Campaign } from "@/types/database";
 
 export default function DashboardPage() {
+  const [stats, setStats] = useState<DashboardStats>({
+    total_brands: 0,
+    total_campaigns: 0,
+    active_campaigns: 0,
+    completed_campaigns: 0,
+    total_budget: 0,
+    average_roi: 0
+  });
+  const [recentCampaigns, setRecentCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [dashboardStats, campaignsData] = await Promise.all([
+          getDashboardStats(),
+          getCampaigns()
+        ]);
+        setStats(dashboardStats);
+        setRecentCampaigns(campaignsData.slice(0, 3)); // Show only 3 most recent campaigns
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, []);
+
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M`;
+    } else if (num >= 1000) {
+      return `${(num / 1000).toFixed(1)}K`;
+    }
+    return num.toString();
+  };
+
+  const formatCurrency = (num: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(num);
+  };
+
+  const formatPercentage = (num: number) => {
+    return `${num.toFixed(1)}%`;
+  };
+
+  const dashboardStats = [
+    {
+      title: "Total Brands",
+      value: stats.total_brands.toString(),
+      icon: BarChart3,
+      description: "Active brands",
+    },
+    {
+      title: "Active Campaigns",
+      value: stats.active_campaigns.toString(),
+      icon: Calendar,
+      description: "Running campaigns",
+    },
+    {
+      title: "Total Budget",
+      value: formatCurrency(stats.total_budget),
+      icon: DollarSign,
+      description: "Campaign budgets",
+    },
+    {
+      title: "Avg. ROI",
+      value: formatPercentage(stats.average_roi),
+      icon: TrendingUp,
+      description: "Return on investment",
+    },
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -116,15 +119,17 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600">Welcome back! Here's what's happening with your campaigns.</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          New Campaign
-        </Button>
+        <Link href="/campaigns">
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            New Campaign
+          </Button>
+        </Link>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => (
+        {dashboardStats.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">
@@ -151,79 +156,90 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentCampaigns.map((campaign) => (
-                <div
-                  key={campaign.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <h3 className="font-medium text-gray-900">{campaign.name}</h3>
-                      <Badge
-                        variant={campaign.status === "active" ? "default" : "secondary"}
-                      >
-                        {campaign.status}
-                      </Badge>
+              {recentCampaigns.length > 0 ? (
+                recentCampaigns.map((campaign) => (
+                  <div
+                    key={campaign.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <h3 className="font-medium text-gray-900">{campaign.name}</h3>
+                        <Badge
+                          variant={campaign.status === "active" ? "default" : "secondary"}
+                        >
+                          {campaign.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-500">{campaign.brand?.name}</p>
+                      <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
+                        <span>{campaign.budget ? formatCurrency(campaign.budget) : "No budget set"}</span>
+                        <span>{new Date(campaign.start_date).toLocaleDateString()} - {new Date(campaign.end_date).toLocaleDateString()}</span>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-500">{campaign.brand}</p>
-                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                      <span>{campaign.influencers} influencers</span>
-                      <span>{campaign.posts} posts</span>
-                      <span>{campaign.engagement} engagement</span>
-                    </div>
+                    <Link href={`/campaigns/${campaign.id}`}>
+                      <Button variant="ghost" size="sm">
+                        View
+                      </Button>
+                    </Link>
                   </div>
-                  <Link href={`/campaigns/${campaign.id}`}>
-                    <Button variant="ghost" size="sm">
-                      View
-                    </Button>
-                  </Link>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No campaigns yet</p>
+                  <p className="text-sm">Create your first campaign to get started</p>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Recent Posts */}
+        {/* Quick Actions */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Posts</CardTitle>
+            <CardTitle>Quick Actions</CardTitle>
             <CardDescription>
-              Latest influencer posts and engagement
+              Common tasks and shortcuts
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentPosts.map((post) => (
-                <div
-                  key={post.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <h3 className="font-medium text-gray-900">{post.influencer}</h3>
-                      <Badge variant="outline">{post.platform}</Badge>
+              <Link href="/campaigns">
+                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <Calendar className="h-5 w-5 text-blue-600" />
                     </div>
-                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                      <span className="flex items-center">
-                        <Heart className="h-3 w-3 mr-1" />
-                        {post.likes.toLocaleString()}
-                      </span>
-                      <span className="flex items-center">
-                        <MessageCircle className="h-3 w-3 mr-1" />
-                        {post.comments}
-                      </span>
-                      <span className="flex items-center">
-                        <Share2 className="h-3 w-3 mr-1" />
-                        {post.shares}
-                      </span>
+                    <div>
+                      <h3 className="font-medium text-gray-900">Manage Campaigns</h3>
+                      <p className="text-sm text-gray-500">View and edit all campaigns</p>
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">{post.postedAt}</p>
                   </div>
                   <Button variant="ghost" size="sm">
-                    <Eye className="h-4 w-4" />
+                    View
                   </Button>
                 </div>
-              ))}
+              </Link>
+
+              <Link href="/brands">
+                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                      <BarChart3 className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-900">Manage Brands</h3>
+                      <p className="text-sm text-gray-500">Add and edit brand profiles</p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm">
+                    View
+                  </Button>
+                </div>
+              </Link>
+
+
             </div>
           </CardContent>
         </Card>

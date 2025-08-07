@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,363 +26,430 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
-  ArrowLeft, 
   Plus, 
   Edit, 
   Trash2, 
-  Share2, 
-  Eye, 
-  Heart, 
-  MessageCircle, 
-  Share2 as ShareIcon,
+  Search, 
   ExternalLink,
-  Instagram,
-  Twitter,
-  Youtube,
-  Calendar,
+  ArrowLeft,
   Users,
-  DollarSign,
-  TrendingUp
+  TrendingUp,
+  Eye,
+  Heart,
+  MessageCircle,
+  Share2,
+  Play
 } from "lucide-react";
-import Link from "next/link";
-import { format } from "date-fns";
-import { Campaign, Post, Influencer } from "@/types/database";
+import { Campaign, CampaignInfluencerDetail } from "@/types/database";
 
-// Mock data - replace with actual data from Supabase
-const mockCampaign: Campaign = {
-  id: "1",
-  brand_id: "1",
-  name: "Summer Collection Launch",
-  description: "Launch campaign for the new summer collection featuring our latest fashion line with influencer partnerships across multiple platforms.",
-  start_date: "2024-06-01",
-  end_date: "2024-08-31",
-  status: "active",
-  budget: 50000,
-  created_at: "2024-05-15T10:00:00Z",
-  updated_at: "2024-06-01T15:30:00Z",
-  brand: { id: "1", name: "Fashion Brand A", created_at: "", updated_at: "" },
-};
-
-const mockInfluencers: Influencer[] = [
-  {
-    id: "1",
-    name: "Emma Johnson",
-    email: "emma@example.com",
-    social_media_handles: { instagram: "@fashionista_emma" },
-    followers_count: 125000,
-    engagement_rate: 4.2,
-    created_at: "",
-    updated_at: "",
-  },
-  {
-    id: "2",
-    name: "Alex Chen",
-    email: "alex@example.com",
-    social_media_handles: { instagram: "@tech_reviewer" },
-    followers_count: 89000,
-    engagement_rate: 3.8,
-    created_at: "",
-    updated_at: "",
-  },
-];
-
-const mockPosts: Post[] = [
-  {
-    id: "1",
-    campaign_influencer_id: "1",
-    platform: "instagram",
-    post_url: "https://instagram.com/p/ABC123",
-    post_id: "ABC123",
-    caption: "Loving the new summer collection! 🌞 #SummerStyle #FashionBrandA",
-    likes: 1240,
-    comments: 89,
-    shares: 23,
-    views: 5600,
-    posted_at: "2024-06-15T10:00:00Z",
-    created_at: "2024-06-15T10:00:00Z",
-    updated_at: "2024-06-15T10:00:00Z",
-    campaign_influencer: {
-      id: "1",
-      campaign_id: "1",
-      influencer_id: "1",
-      status: "completed",
-      rate: 2500,
-      created_at: "",
-      updated_at: "",
-      campaign: mockCampaign,
-      influencer: mockInfluencers[0],
-    },
-  },
-  {
-    id: "2",
-    campaign_influencer_id: "2",
-    platform: "instagram",
-    post_url: "https://instagram.com/p/DEF456",
-    post_id: "DEF456",
-    caption: "Check out this amazing summer look! 🔥 #SummerFashion #BrandA",
-    likes: 890,
-    comments: 45,
-    shares: 12,
-    views: 3200,
-    posted_at: "2024-06-16T14:30:00Z",
-    created_at: "2024-06-16T14:30:00Z",
-    updated_at: "2024-06-16T14:30:00Z",
-    campaign_influencer: {
-      id: "2",
-      campaign_id: "1",
-      influencer_id: "2",
-      status: "completed",
-      rate: 1800,
-      created_at: "",
-      updated_at: "",
-      campaign: mockCampaign,
-      influencer: mockInfluencers[1],
-    },
-  },
-];
-
-export default function CampaignDetailPage({ params }: { params: { id: string } }) {
-  const [posts, setPosts] = useState<Post[]>(mockPosts);
-  const [isCreatePostDialogOpen, setIsCreatePostDialogOpen] = useState(false);
-  const [editingPost, setEditingPost] = useState<Post | null>(null);
+export default function CampaignManagementPage() {
+  const params = useParams();
+  const router = useRouter();
+  const campaignId = params.id as string;
+  
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [influencers, setInfluencers] = useState<CampaignInfluencerDetail[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [tableExists, setTableExists] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isAddInfluencerDialogOpen, setIsAddInfluencerDialogOpen] = useState(false);
+  const [editingInfluencer, setEditingInfluencer] = useState<CampaignInfluencerDetail | null>(null);
+  const [fetchingMetrics, setFetchingMetrics] = useState(false);
   const [formData, setFormData] = useState({
-    influencer_id: "",
-    platform: "instagram" as const,
+    name: "",
+    platform: "instagram" as 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'facebook' | 'linkedin',
+    username: "",
+    content_type: "",
     post_url: "",
-    caption: "",
     likes: "",
     comments: "",
     shares: "",
     views: "",
-    posted_at: "",
+    followers_count: "",
+    status: "active" as 'active' | 'inactive' | 'completed',
+    notes: "",
   });
 
-  const handleCreatePost = () => {
-    const newPost: Post = {
-      id: Date.now().toString(),
-      campaign_influencer_id: formData.influencer_id,
-      platform: formData.platform,
-      post_url: formData.post_url,
-      caption: formData.caption,
-      likes: parseInt(formData.likes) || 0,
-      comments: parseInt(formData.comments) || 0,
-      shares: parseInt(formData.shares) || 0,
-      views: parseInt(formData.views) || 0,
-      posted_at: formData.posted_at,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      campaign_influencer: {
-        id: formData.influencer_id,
-        campaign_id: params.id,
-        influencer_id: formData.influencer_id,
-        status: "completed",
-        created_at: "",
-        updated_at: "",
-        campaign: mockCampaign,
-        influencer: mockInfluencers.find(i => i.id === formData.influencer_id),
-      },
+  // Load campaign and influencer data
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch campaign data
+        const campaignResponse = await fetch(`/api/campaigns/${campaignId}`);
+        if (!campaignResponse.ok) {
+          throw new Error('Failed to fetch campaign');
+        }
+        const campaignData = await campaignResponse.json();
+        setCampaign(campaignData);
+        
+        // Fetch influencers data
+        const influencersResponse = await fetch(`/api/campaigns/${campaignId}/influencers`);
+        if (influencersResponse.status === 404) {
+          // Table doesn't exist
+          setTableExists(false);
+          setInfluencers([]);
+        } else if (influencersResponse.ok) {
+          setTableExists(true);
+          const influencersData = await influencersResponse.json();
+          setInfluencers(influencersData);
+        } else {
+          throw new Error('Failed to fetch influencers');
+        }
+      } catch (error) {
+        console.error('Error loading campaign data:', error);
+      } finally {
+        setLoading(false);
+      }
     };
-    setPosts([...posts, newPost]);
-    setFormData({
-      influencer_id: "",
-      platform: "instagram",
-      post_url: "",
-      caption: "",
-      likes: "",
-      comments: "",
-      shares: "",
-      views: "",
-      posted_at: "",
-    });
-    setIsCreatePostDialogOpen(false);
+
+    if (campaignId) {
+      loadData();
+    }
+  }, [campaignId]);
+
+  const filteredInfluencers = influencers.filter((influencer) =>
+    influencer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    influencer.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    influencer.platform.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleCreateInfluencer = async () => {
+    try {
+      const response = await fetch(`/api/campaigns/${campaignId}/influencers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          likes: parseInt(formData.likes) || 0,
+          comments: parseInt(formData.comments) || 0,
+          shares: parseInt(formData.shares) || 0,
+          views: parseInt(formData.views) || 0,
+          followers_count: parseInt(formData.followers_count) || 0,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create influencer');
+      }
+
+      const newInfluencer = await response.json();
+      setInfluencers([newInfluencer, ...influencers]);
+      setFormData({
+        name: "",
+        platform: "instagram",
+        username: "",
+        content_type: "",
+        post_url: "",
+        likes: "",
+        comments: "",
+        shares: "",
+        views: "",
+        followers_count: "",
+        status: "active",
+        notes: "",
+      });
+      setIsAddInfluencerDialogOpen(false);
+    } catch (error) {
+      console.error('Error creating influencer:', error);
+    }
   };
 
-  const handleEditPost = () => {
-    if (!editingPost) return;
-    const updatedPosts = posts.map((post) =>
-      post.id === editingPost.id
-        ? {
-            ...post,
-            post_url: formData.post_url,
-            caption: formData.caption,
-            likes: parseInt(formData.likes) || 0,
-            comments: parseInt(formData.comments) || 0,
-            shares: parseInt(formData.shares) || 0,
-            views: parseInt(formData.views) || 0,
-            posted_at: formData.posted_at,
-            updated_at: new Date().toISOString(),
-          }
-        : post
-    );
-    setPosts(updatedPosts);
-    setEditingPost(null);
-    setFormData({
-      influencer_id: "",
-      platform: "instagram",
-      post_url: "",
-      caption: "",
-      likes: "",
-      comments: "",
-      shares: "",
-      views: "",
-      posted_at: "",
-    });
+  const handleEditInfluencer = async () => {
+    if (!editingInfluencer) return;
+    try {
+      const response = await fetch(`/api/campaigns/${campaignId}/influencers`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: editingInfluencer.id,
+          ...formData,
+          likes: parseInt(formData.likes) || 0,
+          comments: parseInt(formData.comments) || 0,
+          shares: parseInt(formData.shares) || 0,
+          views: parseInt(formData.views) || 0,
+          followers_count: parseInt(formData.followers_count) || 0,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update influencer');
+      }
+
+      const updatedInfluencer = await response.json();
+      setInfluencers(influencers.map((inf) =>
+        inf.id === editingInfluencer.id ? updatedInfluencer : inf
+      ));
+      setEditingInfluencer(null);
+      setFormData({
+        name: "",
+        platform: "instagram",
+        username: "",
+        content_type: "",
+        post_url: "",
+        likes: "",
+        comments: "",
+        shares: "",
+        views: "",
+        followers_count: "",
+        status: "active",
+        notes: "",
+      });
+    } catch (error) {
+      console.error('Error updating influencer:', error);
+    }
   };
 
-  const handleDeletePost = (id: string) => {
-    setPosts(posts.filter((post) => post.id !== id));
+  const handleDeleteInfluencer = async (id: string) => {
+    try {
+      const response = await fetch(`/api/campaigns/${campaignId}/influencers?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete influencer');
+      }
+
+      setInfluencers(influencers.filter((inf) => inf.id !== id));
+    } catch (error) {
+      console.error('Error deleting influencer:', error);
+    }
   };
 
-  const openEditDialog = (post: Post) => {
-    setEditingPost(post);
+  const openEditDialog = (influencer: CampaignInfluencerDetail) => {
+    setEditingInfluencer(influencer);
     setFormData({
-      influencer_id: post.campaign_influencer?.influencer_id || "",
-      platform: post.platform,
-      post_url: post.post_url,
-      caption: post.caption || "",
-      likes: post.likes.toString(),
-      comments: post.comments.toString(),
-      shares: post.shares.toString(),
-      views: post.views?.toString() || "",
-      posted_at: post.posted_at,
+      name: influencer.name,
+      platform: influencer.platform,
+      username: influencer.username,
+      content_type: influencer.content_type || "",
+      post_url: influencer.post_url || "",
+      likes: influencer.likes.toString(),
+      comments: influencer.comments.toString(),
+      shares: influencer.shares.toString(),
+      views: influencer.views.toString(),
+
+      followers_count: influencer.followers_count.toString(),
+      status: influencer.status,
+      notes: influencer.notes || "",
     });
   };
 
   const getPlatformIcon = (platform: string) => {
     switch (platform) {
-      case "instagram":
-        return <Instagram className="h-4 w-4" />;
-      case "youtube":
-        return <Youtube className="h-4 w-4" />;
-      case "twitter":
-        return <Twitter className="h-4 w-4" />;
+      case 'instagram':
+        return <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded flex items-center justify-center text-white text-xs">IG</div>;
+      case 'tiktok':
+        return <div className="w-6 h-6 bg-black rounded flex items-center justify-center text-white text-xs">TT</div>;
+      case 'youtube':
+        return <div className="w-6 h-6 bg-red-500 rounded flex items-center justify-center text-white text-xs">YT</div>;
+      case 'twitter':
+        return <div className="w-6 h-6 bg-blue-400 rounded flex items-center justify-center text-white text-xs">TW</div>;
       default:
-        return null;
+        return <div className="w-6 h-6 bg-gray-500 rounded flex items-center justify-center text-white text-xs">{platform.charAt(0).toUpperCase()}</div>;
     }
   };
 
-  const totalEngagement = posts.reduce((sum, post) => sum + post.likes + post.comments + post.shares, 0);
-  const totalReach = posts.reduce((sum, post) => sum + (post.views || 0), 0);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "active":
+        return "bg-green-100 text-green-800";
+      case "completed":
+        return "bg-blue-100 text-blue-800";
+      case "inactive":
+        return "bg-gray-100 text-gray-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading campaign...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!campaign) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-gray-600">Campaign not found</p>
+          <Button onClick={() => router.back()} className="mt-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Go Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Link href="/campaigns">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Campaigns
-            </Button>
-          </Link>
+          <Button variant="ghost" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{mockCampaign.name}</h1>
-            <p className="text-gray-600">{mockCampaign.description}</p>
+            <h1 className="text-3xl font-bold text-gray-900">{campaign.name}</h1>
+            <p className="text-gray-600">{campaign.brand?.name}</p>
           </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline">
-            <Share2 className="h-4 w-4 mr-2" />
-            Share Campaign
-          </Button>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Post
-          </Button>
-        </div>
+        <Badge className={getStatusColor(campaign.status)}>
+          {campaign.status}
+        </Badge>
       </div>
 
-      {/* Campaign Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Campaign Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <div>
-                <p className="text-sm font-medium text-gray-600">Duration</p>
-                <p className="text-2xl font-bold">
-                  {format(new Date(mockCampaign.start_date), "MMM dd")} - {format(new Date(mockCampaign.end_date), "MMM dd, yyyy")}
-                </p>
-              </div>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Influencers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{influencers.length}</div>
+            <p className="text-xs text-muted-foreground">Active influencers</p>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <Users className="h-4 w-4 text-gray-400" />
-              <div>
-                <p className="text-sm font-medium text-gray-600">Influencers</p>
-                <p className="text-2xl font-bold">{mockInfluencers.length}</p>
-              </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Engagement</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {influencers.reduce((sum, inf) => sum + inf.likes + inf.comments + inf.shares, 0).toLocaleString()}
             </div>
+            <p className="text-xs text-muted-foreground">Likes, comments, shares</p>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <DollarSign className="h-4 w-4 text-gray-400" />
-              <div>
-                <p className="text-sm font-medium text-gray-600">Budget</p>
-                <p className="text-2xl font-bold">${mockCampaign.budget?.toLocaleString()}</p>
-              </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg. Engagement Rate</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {influencers.length > 0 
+                ? (influencers.reduce((sum, inf) => sum + inf.likes + inf.comments + inf.shares, 0) / influencers.length).toFixed(0)
+                : "0"
+              }
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <TrendingUp className="h-4 w-4 text-gray-400" />
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Engagement</p>
-                <p className="text-2xl font-bold">{totalEngagement.toLocaleString()}</p>
-              </div>
-            </div>
+            <p className="text-xs text-muted-foreground">Average engagement per influencer</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Posts Management */}
+      {/* Influencers Section */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Campaign Posts</CardTitle>
+              <CardTitle>Campaign Influencers</CardTitle>
               <CardDescription>
-                Manage influencer posts and track engagement metrics
+                Manage influencers and track their performance
               </CardDescription>
             </div>
-            <Dialog open={isCreatePostDialogOpen} onOpenChange={setIsCreatePostDialogOpen}>
+            <Dialog open={isAddInfluencerDialogOpen} onOpenChange={setIsAddInfluencerDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button disabled={!tableExists}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Post
+                  Add Influencer
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Add New Post</DialogTitle>
+                  <DialogTitle>Add New Influencer</DialogTitle>
                   <DialogDescription>
-                    Add a new influencer post to this campaign.
+                    Add influencer details and performance metrics.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="influencer">Influencer</Label>
-                    <Select value={formData.influencer_id} onValueChange={(value) => setFormData({ ...formData, influencer_id: value })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select influencer" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {mockInfluencers.map((influencer) => (
-                          <SelectItem key={influencer.id} value={influencer.id}>
-                            {influencer.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                <div className="grid grid-cols-2 gap-4 mt-6">
+                  <div className="col-span-2">
+                    <Label htmlFor="post_url">Post URL</Label>
+                    <div className="flex space-x-2">
+                      <Input
+                        id="post_url"
+                        value={formData.post_url}
+                        onChange={(e) => setFormData({ ...formData, post_url: e.target.value })}
+                        placeholder="https://..."
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={fetchingMetrics || !formData.post_url}
+                        onClick={async () => {
+                          if (formData.post_url) {
+                            try {
+                              setFetchingMetrics(true);
+                              const response = await fetch('/api/webhook/fetch-post-metrics', {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                  postUrl: formData.post_url
+                                }),
+                              });
+                              
+                              if (response.ok) {
+                                const metrics = await response.json();
+                                setFormData({
+                                  ...formData,
+                                  name: metrics.name || formData.name,
+                                  username: metrics.username ? `@${metrics.username}` : formData.username,
+                                  likes: metrics.likes?.toString() || formData.likes,
+                                  comments: metrics.comments?.toString() || formData.comments,
+                                  views: metrics.views?.toString() || formData.views,
+                                });
+                              } else {
+                                console.error('Failed to fetch metrics:', response.statusText);
+                              }
+                            } catch (error) {
+                              console.error('Error fetching metrics:', error);
+                            } finally {
+                              setFetchingMetrics(false);
+                            }
+                          }
+                        }}
+                      >
+                        {fetchingMetrics ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2"></div>
+                            Fetching...
+                          </>
+                        ) : (
+                          'Fetch Metrics'
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="name">Influencer Name</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Enter influencer name"
+                    />
                   </div>
                   <div>
                     <Label htmlFor="platform">Platform</Label>
@@ -394,26 +462,41 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
                         <SelectItem value="tiktok">TikTok</SelectItem>
                         <SelectItem value="youtube">YouTube</SelectItem>
                         <SelectItem value="twitter">Twitter</SelectItem>
+                        <SelectItem value="facebook">Facebook</SelectItem>
+                        <SelectItem value="linkedin">LinkedIn</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="col-span-2">
-                    <Label htmlFor="post_url">Post URL</Label>
+                  <div>
+                    <Label htmlFor="username">Username</Label>
                     <Input
-                      id="post_url"
-                      value={formData.post_url}
-                      onChange={(e) => setFormData({ ...formData, post_url: e.target.value })}
-                      placeholder="Enter post URL"
+                      id="username"
+                      value={formData.username}
+                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                      placeholder="@username"
                     />
                   </div>
-                  <div className="col-span-2">
-                    <Label htmlFor="caption">Caption</Label>
-                    <Textarea
-                      id="caption"
-                      value={formData.caption}
-                      onChange={(e) => setFormData({ ...formData, caption: e.target.value })}
-                      placeholder="Enter post caption"
+                  <div>
+                    <Label htmlFor="content_type">Content Type</Label>
+                    <Input
+                      id="content_type"
+                      value={formData.content_type}
+                      onChange={(e) => setFormData({ ...formData, content_type: e.target.value })}
+                      placeholder="e.g., Photo Post, Video, Story"
                     />
+                  </div>
+                  <div>
+                    <Label htmlFor="status">Status</Label>
+                    <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label htmlFor="likes">Likes</Label>
@@ -422,7 +505,7 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
                       type="number"
                       value={formData.likes}
                       onChange={(e) => setFormData({ ...formData, likes: e.target.value })}
-                      placeholder="Number of likes"
+                      placeholder="0"
                     />
                   </div>
                   <div>
@@ -432,7 +515,7 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
                       type="number"
                       value={formData.comments}
                       onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
-                      placeholder="Number of comments"
+                      placeholder="0"
                     />
                   </div>
                   <div>
@@ -442,7 +525,7 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
                       type="number"
                       value={formData.shares}
                       onChange={(e) => setFormData({ ...formData, shares: e.target.value })}
-                      placeholder="Number of shares"
+                      placeholder="0"
                     />
                   </div>
                   <div>
@@ -452,108 +535,161 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
                       type="number"
                       value={formData.views}
                       onChange={(e) => setFormData({ ...formData, views: e.target.value })}
-                      placeholder="Number of views"
+                      placeholder="0"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="followers_count">Followers Count</Label>
+                    <Input
+                      id="followers_count"
+                      type="number"
+                      value={formData.followers_count}
+                      onChange={(e) => setFormData({ ...formData, followers_count: e.target.value })}
+                      placeholder="0"
                     />
                   </div>
                   <div className="col-span-2">
-                    <Label htmlFor="posted_at">Posted Date</Label>
-                    <Input
-                      id="posted_at"
-                      type="datetime-local"
-                      value={formData.posted_at}
-                      onChange={(e) => setFormData({ ...formData, posted_at: e.target.value })}
+                    <Label htmlFor="notes">Notes</Label>
+                    <Textarea
+                      id="notes"
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      placeholder="Additional notes..."
                     />
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsCreatePostDialogOpen(false)}>
+                  <Button variant="outline" onClick={() => setIsAddInfluencerDialogOpen(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={handleCreatePost}>Add Post</Button>
+                  <Button onClick={editingInfluencer ? handleEditInfluencer : handleCreateInfluencer}>
+                    {editingInfluencer ? 'Update Influencer' : 'Add Influencer'}
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
         </CardHeader>
         <CardContent>
+          {/* Table Setup Warning */}
+          {!tableExists && (
+            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-yellow-800">
+                    Database Setup Required
+                  </h3>
+                  <div className="mt-2 text-sm text-yellow-700">
+                    <p>
+                      The campaign influencers table has not been created yet. Please run the SQL schema in your Supabase database to enable influencer management.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Search */}
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search influencers..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+                disabled={!tableExists}
+              />
+            </div>
+          </div>
+
+          {/* Influencers Table */}
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Influencer</TableHead>
                 <TableHead>Platform</TableHead>
-                <TableHead>Post</TableHead>
-                <TableHead>Engagement</TableHead>
-                <TableHead>Posted</TableHead>
+                <TableHead>Content</TableHead>
+                <TableHead>Likes</TableHead>
+                <TableHead>Comments</TableHead>
+                <TableHead>Shares</TableHead>
+                <TableHead>Views</TableHead>
+
+                <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {posts.map((post) => (
-                <TableRow key={post.id}>
+              {filteredInfluencers.map((influencer) => (
+                <TableRow key={influencer.id}>
                   <TableCell>
-                    <div className="flex items-center space-x-3">
-                      <Avatar>
-                        <AvatarImage src={`/avatars/${post.campaign_influencer?.influencer_id}.png`} />
-                        <AvatarFallback>
-                          {post.campaign_influencer?.influencer?.name.split(" ").map(n => n[0]).join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{post.campaign_influencer?.influencer?.name}</div>
-                        <div className="text-sm text-gray-500">{post.campaign_influencer?.influencer?.email}</div>
-                      </div>
+                    <div>
+                      <div className="font-medium">{influencer.name}</div>
+                      <div className="text-sm text-gray-500">{influencer.username}</div>
+                      <div className="text-xs text-gray-400">{influencer.followers_count.toLocaleString()} followers</div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
-                      {getPlatformIcon(post.platform)}
-                      <Badge variant="outline">{post.platform}</Badge>
+                      {getPlatformIcon(influencer.platform)}
+                      <span className="capitalize">{influencer.platform}</span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="max-w-xs">
-                      <div className="text-sm font-medium truncate">
+                    <div>
+                      <div className="text-sm font-medium">{influencer.content_type || "N/A"}</div>
+                      {influencer.post_url && (
                         <a
-                          href={post.post_url}
+                          href={influencer.post_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+                          className="flex items-center text-blue-600 hover:text-blue-800 text-xs"
                         >
-                          <span>View Post</span>
-                          <ExternalLink className="h-3 w-3" />
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          View Post
                         </a>
-                      </div>
-                      <div className="text-sm text-gray-500 truncate">
-                        {post.caption}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2 text-sm">
-                        <Heart className="h-3 w-3 text-red-500" />
-                        <span>{post.likes.toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 text-sm">
-                        <MessageCircle className="h-3 w-3 text-blue-500" />
-                        <span>{post.comments.toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 text-sm">
-                        <ShareIcon className="h-3 w-3 text-green-500" />
-                        <span>{post.shares.toLocaleString()}</span>
-                      </div>
-                      {post.views && (
-                        <div className="flex items-center space-x-2 text-sm">
-                          <Eye className="h-3 w-3 text-gray-500" />
-                          <span>{post.views.toLocaleString()}</span>
-                        </div>
                       )}
                     </div>
                   </TableCell>
+                                      <TableCell>
+                      <div className="flex items-center text-sm">
+                        <Heart className="h-3 w-3 mr-1 text-red-500" />
+                        {influencer.likes.toLocaleString()}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center text-sm">
+                        <MessageCircle className="h-3 w-3 mr-1 text-blue-500" />
+                        {influencer.comments.toLocaleString()}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center text-sm">
+                        <Share2 className="h-3 w-3 mr-1 text-green-500" />
+                        {influencer.shares.toLocaleString()}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {influencer.views > 0 ? (
+                        <div className="flex items-center text-sm">
+                          <Play className="h-3 w-3 mr-1 text-purple-500" />
+                          {influencer.views.toLocaleString()}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-sm">-</span>
+                      )}
+                    </TableCell>
+
                   <TableCell>
-                    <div className="text-sm text-gray-500">
-                      {format(new Date(post.posted_at), "MMM dd, yyyy")}
-                    </div>
+                    <Badge className={getStatusColor(influencer.status)}>
+                      {influencer.status}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
@@ -562,36 +698,135 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => openEditDialog(post)}
+                            onClick={() => openEditDialog(influencer)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-2xl">
                           <DialogHeader>
-                            <DialogTitle>Edit Post</DialogTitle>
+                            <DialogTitle>Edit Influencer</DialogTitle>
                             <DialogDescription>
-                              Update post information and engagement metrics.
+                              Update influencer information and metrics.
                             </DialogDescription>
                           </DialogHeader>
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-2 gap-4 mt-6">
                             <div className="col-span-2">
                               <Label htmlFor="edit-post_url">Post URL</Label>
-                              <Input
-                                id="edit-post_url"
-                                value={formData.post_url}
-                                onChange={(e) => setFormData({ ...formData, post_url: e.target.value })}
-                                placeholder="Enter post URL"
-                              />
+                              <div className="flex space-x-2">
+                                <Input
+                                  id="edit-post_url"
+                                  value={formData.post_url}
+                                  onChange={(e) => setFormData({ ...formData, post_url: e.target.value })}
+                                  placeholder="https://..."
+                                  className="flex-1"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={fetchingMetrics || !formData.post_url}
+                                  onClick={async () => {
+                                    if (formData.post_url) {
+                                      try {
+                                        setFetchingMetrics(true);
+                                        const response = await fetch('/api/webhook/fetch-post-metrics', {
+                                          method: 'POST',
+                                          headers: {
+                                            'Content-Type': 'application/json',
+                                          },
+                                          body: JSON.stringify({
+                                            postUrl: formData.post_url
+                                          }),
+                                        });
+                                        
+                                        if (response.ok) {
+                                          const metrics = await response.json();
+                                          setFormData({
+                                            ...formData,
+                                            name: metrics.name || formData.name,
+                                            username: metrics.username ? `@${metrics.username}` : formData.username,
+                                            likes: metrics.likes?.toString() || formData.likes,
+                                            comments: metrics.comments?.toString() || formData.comments,
+                                            views: metrics.views?.toString() || formData.views,
+                                          });
+                                        } else {
+                                          console.error('Failed to fetch metrics:', response.statusText);
+                                        }
+                                      } catch (error) {
+                                        console.error('Error fetching metrics:', error);
+                                      } finally {
+                                        setFetchingMetrics(false);
+                                      }
+                                    }
+                                  }}
+                                >
+                                  {fetchingMetrics ? (
+                                    <>
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2"></div>
+                                      Fetching...
+                                    </>
+                                  ) : (
+                                    'Fetch Metrics'
+                                  )}
+                                </Button>
+                              </div>
                             </div>
                             <div className="col-span-2">
-                              <Label htmlFor="edit-caption">Caption</Label>
-                              <Textarea
-                                id="edit-caption"
-                                value={formData.caption}
-                                onChange={(e) => setFormData({ ...formData, caption: e.target.value })}
-                                placeholder="Enter post caption"
+                              <Label htmlFor="edit-name">Influencer Name</Label>
+                              <Input
+                                id="edit-name"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                placeholder="Enter influencer name"
                               />
+                            </div>
+                            <div>
+                              <Label htmlFor="edit-platform">Platform</Label>
+                              <Select value={formData.platform} onValueChange={(value: any) => setFormData({ ...formData, platform: value })}>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="instagram">Instagram</SelectItem>
+                                  <SelectItem value="tiktok">TikTok</SelectItem>
+                                  <SelectItem value="youtube">YouTube</SelectItem>
+                                  <SelectItem value="twitter">Twitter</SelectItem>
+                                  <SelectItem value="facebook">Facebook</SelectItem>
+                                  <SelectItem value="linkedin">LinkedIn</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label htmlFor="edit-username">Username</Label>
+                              <Input
+                                id="edit-username"
+                                value={formData.username}
+                                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                                placeholder="@username"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="edit-content_type">Content Type</Label>
+                              <Input
+                                id="edit-content_type"
+                                value={formData.content_type}
+                                onChange={(e) => setFormData({ ...formData, content_type: e.target.value })}
+                                placeholder="e.g., Photo Post, Video, Story"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="edit-status">Status</Label>
+                              <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="active">Active</SelectItem>
+                                  <SelectItem value="inactive">Inactive</SelectItem>
+                                  <SelectItem value="completed">Completed</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </div>
                             <div>
                               <Label htmlFor="edit-likes">Likes</Label>
@@ -600,7 +835,7 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
                                 type="number"
                                 value={formData.likes}
                                 onChange={(e) => setFormData({ ...formData, likes: e.target.value })}
-                                placeholder="Number of likes"
+                                placeholder="0"
                               />
                             </div>
                             <div>
@@ -610,7 +845,7 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
                                 type="number"
                                 value={formData.comments}
                                 onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
-                                placeholder="Number of comments"
+                                placeholder="0"
                               />
                             </div>
                             <div>
@@ -620,7 +855,7 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
                                 type="number"
                                 value={formData.shares}
                                 onChange={(e) => setFormData({ ...formData, shares: e.target.value })}
-                                placeholder="Number of shares"
+                                placeholder="0"
                               />
                             </div>
                             <div>
@@ -630,31 +865,44 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
                                 type="number"
                                 value={formData.views}
                                 onChange={(e) => setFormData({ ...formData, views: e.target.value })}
-                                placeholder="Number of views"
+                                placeholder="0"
+                              />
+                            </div>
+
+                            <div>
+                              <Label htmlFor="edit-followers_count">Followers Count</Label>
+                              <Input
+                                id="edit-followers_count"
+                                type="number"
+                                value={formData.followers_count}
+                                onChange={(e) => setFormData({ ...formData, followers_count: e.target.value })}
+                                placeholder="0"
                               />
                             </div>
                             <div className="col-span-2">
-                              <Label htmlFor="edit-posted_at">Posted Date</Label>
-                              <Input
-                                id="edit-posted_at"
-                                type="datetime-local"
-                                value={formData.posted_at}
-                                onChange={(e) => setFormData({ ...formData, posted_at: e.target.value })}
+                              <Label htmlFor="edit-notes">Notes</Label>
+                              <Textarea
+                                id="edit-notes"
+                                value={formData.notes}
+                                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                placeholder="Additional notes..."
                               />
                             </div>
                           </div>
                           <DialogFooter>
-                            <Button variant="outline" onClick={() => setEditingPost(null)}>
+                            <Button variant="outline" onClick={() => setEditingInfluencer(null)}>
                               Cancel
                             </Button>
-                            <Button onClick={handleEditPost}>Update Post</Button>
+                            <Button onClick={handleEditInfluencer}>
+                              Update Influencer
+                            </Button>
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDeletePost(post.id)}
+                        onClick={() => handleDeleteInfluencer(influencer.id)}
                       >
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
@@ -662,6 +910,27 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
                   </TableCell>
                 </TableRow>
               ))}
+              {/* Totals Row */}
+              <TableRow className="bg-gray-50 font-semibold">
+                <TableCell colSpan={3} className="text-center font-bold">
+                  TOTALS
+                </TableCell>
+                <TableCell className="text-center font-bold">
+                  {influencers.reduce((sum, inf) => sum + inf.likes, 0).toLocaleString()}
+                </TableCell>
+                <TableCell className="text-center font-bold">
+                  {influencers.reduce((sum, inf) => sum + inf.comments, 0).toLocaleString()}
+                </TableCell>
+                <TableCell className="text-center font-bold">
+                  {influencers.reduce((sum, inf) => sum + inf.shares, 0).toLocaleString()}
+                </TableCell>
+                <TableCell className="text-center font-bold">
+                  {influencers.reduce((sum, inf) => sum + inf.views, 0).toLocaleString()}
+                </TableCell>
+                <TableCell></TableCell>
+                <TableCell></TableCell>
+                <TableCell></TableCell>
+                            </TableRow>
             </TableBody>
           </Table>
         </CardContent>

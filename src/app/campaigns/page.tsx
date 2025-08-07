@@ -40,59 +40,16 @@ import {
   TrendingUp
 } from "lucide-react";
 import { format } from "date-fns";
-import { Campaign, Brand, DateRange } from "@/types/database";
-
-// Mock data - replace with actual data from Supabase
-const mockBrands: Brand[] = [
-  { id: "1", name: "Fashion Brand A", created_at: "", updated_at: "" },
-  { id: "2", name: "Tech Brand B", created_at: "", updated_at: "" },
-  { id: "3", name: "Lifestyle Brand C", created_at: "", updated_at: "" },
-];
-
-const mockCampaigns: Campaign[] = [
-  {
-    id: "1",
-    brand_id: "1",
-    name: "Summer Collection Launch",
-    description: "Launch campaign for the new summer collection",
-    start_date: "2024-06-01",
-    end_date: "2024-08-31",
-    status: "active",
-    budget: 50000,
-    created_at: "2024-05-15T10:00:00Z",
-    updated_at: "2024-06-01T15:30:00Z",
-    brand: mockBrands[0],
-  },
-  {
-    id: "2",
-    brand_id: "2",
-    name: "Product Launch Campaign",
-    description: "New product launch with influencer partnerships",
-    start_date: "2024-06-15",
-    end_date: "2024-07-15",
-    status: "active",
-    budget: 35000,
-    created_at: "2024-06-01T14:00:00Z",
-    updated_at: "2024-06-10T09:15:00Z",
-    brand: mockBrands[1],
-  },
-  {
-    id: "3",
-    brand_id: "3",
-    name: "Holiday Promotion",
-    description: "Holiday season promotion campaign",
-    start_date: "2024-05-01",
-    end_date: "2024-05-31",
-    status: "completed",
-    budget: 25000,
-    created_at: "2024-04-15T11:00:00Z",
-    updated_at: "2024-06-05T16:45:00Z",
-    brand: mockBrands[2],
-  },
-];
+import { Campaign, Brand } from "@/types/database";
+import type { DateRange } from "react-day-picker";
+import { getBrands, getCampaigns, createCampaign, updateCampaign, deleteCampaign } from "@/lib/database";
+import { useEffect } from "react";
 
 export default function CampaignsPage() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>(mockCampaigns);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [influencerCounts, setInfluencerCounts] = useState<{ [key: string]: number }>({});
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBrand, setSelectedBrand] = useState<string>("");
   const [selectedStatus, setSelectedStatus] = useState<string>("");
@@ -105,72 +62,102 @@ export default function CampaignsPage() {
     brand_id: "",
     start_date: "",
     end_date: "",
-    status: "draft" as const,
+    status: "draft" as 'draft' | 'active' | 'completed' | 'paused',
     budget: "",
   });
+
+  // Load data from database
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [campaignsData, brandsData, influencerCountsData] = await Promise.all([
+          getCampaigns(),
+          getBrands(),
+          fetch('/api/campaigns/influencer-counts').then(res => res.json())
+        ]);
+        setCampaigns(campaignsData);
+        setBrands(brandsData);
+        setInfluencerCounts(influencerCountsData);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   const filteredCampaigns = campaigns.filter((campaign) => {
     const matchesSearch = campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          campaign.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesBrand = !selectedBrand || campaign.brand_id === selectedBrand;
-    const matchesStatus = !selectedStatus || campaign.status === selectedStatus;
+    const matchesBrand = selectedBrand === "all" || !selectedBrand || campaign.brand_id === selectedBrand;
+    const matchesStatus = selectedStatus === "all" || !selectedStatus || campaign.status === selectedStatus;
     const matchesDateRange = !dateRange || (
-      new Date(campaign.start_date) >= dateRange.from &&
-      new Date(campaign.end_date) <= dateRange.to
+      (dateRange.from && new Date(campaign.start_date) >= dateRange.from) &&
+      (dateRange.to && new Date(campaign.end_date) <= dateRange.to)
     );
     
     return matchesSearch && matchesBrand && matchesStatus && matchesDateRange;
   });
 
-  const handleCreateCampaign = () => {
-    const newCampaign: Campaign = {
-      id: Date.now().toString(),
-      ...formData,
-      budget: formData.budget ? parseFloat(formData.budget) : undefined,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      brand: mockBrands.find(b => b.id === formData.brand_id),
-    };
-    setCampaigns([...campaigns, newCampaign]);
-    setFormData({
-      name: "",
-      description: "",
-      brand_id: "",
-      start_date: "",
-      end_date: "",
-      status: "draft",
-      budget: "",
-    });
-    setIsCreateDialogOpen(false);
+  const handleCreateCampaign = async () => {
+    try {
+      const newCampaign = await createCampaign({
+        ...formData,
+        budget: formData.budget ? parseFloat(formData.budget) : undefined,
+      });
+      setCampaigns([newCampaign, ...campaigns]);
+      setFormData({
+        name: "",
+        description: "",
+        brand_id: "",
+        start_date: "",
+        end_date: "",
+        status: "draft",
+        budget: "",
+      });
+      setIsCreateDialogOpen(false);
+      // Redirect to campaign management page
+      window.location.href = `/campaigns/${newCampaign.id}`;
+    } catch (error) {
+      console.error('Error creating campaign:', error);
+    }
   };
 
-  const handleEditCampaign = () => {
+  const handleEditCampaign = async () => {
     if (!editingCampaign) return;
-    const updatedCampaigns = campaigns.map((campaign) =>
-      campaign.id === editingCampaign.id
-        ? { 
-            ...campaign, 
-            ...formData, 
-            budget: formData.budget ? parseFloat(formData.budget) : undefined,
-            updated_at: new Date().toISOString() 
-          }
-        : campaign
-    );
-    setCampaigns(updatedCampaigns);
-    setEditingCampaign(null);
-    setFormData({
-      name: "",
-      description: "",
-      brand_id: "",
-      start_date: "",
-      end_date: "",
-      status: "draft",
-      budget: "",
-    });
+    try {
+      const updatedCampaign = await updateCampaign(editingCampaign.id, {
+        ...formData,
+        budget: formData.budget ? parseFloat(formData.budget) : undefined,
+      });
+      setCampaigns(campaigns.map((campaign) =>
+        campaign.id === editingCampaign.id ? updatedCampaign : campaign
+      ));
+      setEditingCampaign(null);
+      setFormData({
+        name: "",
+        description: "",
+        brand_id: "",
+        start_date: "",
+        end_date: "",
+        status: "draft",
+        budget: "",
+      });
+    } catch (error) {
+      console.error('Error updating campaign:', error);
+    }
   };
 
-  const handleDeleteCampaign = (id: string) => {
-    setCampaigns(campaigns.filter((campaign) => campaign.id !== id));
+  const handleDeleteCampaign = async (id: string) => {
+    try {
+      await deleteCampaign(id);
+      setCampaigns(campaigns.filter((campaign) => campaign.id !== id));
+    } catch (error) {
+      console.error('Error deleting campaign:', error);
+    }
   };
 
   const openEditDialog = (campaign: Campaign) => {
@@ -198,6 +185,17 @@ export default function CampaignsPage() {
         return "bg-gray-100 text-gray-800";
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading campaigns...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -246,7 +244,7 @@ export default function CampaignsPage() {
                     <SelectValue placeholder="Select brand" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockBrands.map((brand) => (
+                    {brands.map((brand) => (
                       <SelectItem key={brand.id} value={brand.id}>
                         {brand.name}
                       </SelectItem>
@@ -324,8 +322,8 @@ export default function CampaignsPage() {
                 <SelectValue placeholder="All brands" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All brands</SelectItem>
-                {mockBrands.map((brand) => (
+                <SelectItem value="all">All brands</SelectItem>
+                {brands.map((brand) => (
                   <SelectItem key={brand.id} value={brand.id}>
                     {brand.name}
                   </SelectItem>
@@ -337,7 +335,7 @@ export default function CampaignsPage() {
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All statuses</SelectItem>
+                <SelectItem value="all">All statuses</SelectItem>
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
@@ -394,6 +392,7 @@ export default function CampaignsPage() {
                 <TableHead>Date Range</TableHead>
                 <TableHead>Budget</TableHead>
                 <TableHead>Influencers</TableHead>
+                <TableHead>Manage</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -429,14 +428,20 @@ export default function CampaignsPage() {
                   <TableCell>
                     <div className="flex items-center space-x-1">
                       <Users className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm">8</span>
+                      <span className="text-sm">{influencerCounts[campaign.id] || 0}</span>
                     </div>
                   </TableCell>
                   <TableCell>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => window.location.href = `/campaigns/${campaign.id}`}
+                    >
+                      Manage
+                    </Button>
+                  </TableCell>
+                  <TableCell>
                     <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4" />
-                      </Button>
                       <Button variant="ghost" size="sm">
                         <Share2 className="h-4 w-4" />
                       </Button>
@@ -483,7 +488,7 @@ export default function CampaignsPage() {
                                   <SelectValue placeholder="Select brand" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {mockBrands.map((brand) => (
+                                  {brands.map((brand) => (
                                     <SelectItem key={brand.id} value={brand.id}>
                                       {brand.name}
                                     </SelectItem>

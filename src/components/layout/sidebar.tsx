@@ -21,7 +21,6 @@ const navigation = [
   { name: "Brands", href: "/brands", icon: Building2 },
   { name: "Campaigns", href: "/campaigns", icon: Calendar },
   { name: "Influencers", href: "/influencers", icon: Users },
-  { name: "Analytics", href: "/analytics", icon: TrendingUp },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
