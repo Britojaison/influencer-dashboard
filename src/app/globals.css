@@ -120,3 +120,93 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Rich Text Editor Styles */
+.ProseMirror {
+  outline: none;
+  min-height: 200px;
+  padding: 1rem;
+}
+
+.ProseMirror p {
+  margin: 0.5rem 0;
+}
+
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4,
+.ProseMirror h5,
+.ProseMirror h6 {
+  margin: 1rem 0 0.5rem 0;
+  font-weight: 600;
+}
+
+.ProseMirror strong {
+  font-weight: 600;
+}
+
+.ProseMirror em {
+  font-style: italic;
+}
+
+.ProseMirror u {
+  text-decoration: underline;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+  list-style-position: outside;
+}
+
+.ProseMirror ul {
+  list-style-type: disc;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+}
+
+.ProseMirror li {
+  margin: 0.25rem 0;
+  display: list-item;
+}
+
+.ProseMirror li::marker {
+  color: #6b7280;
+}
+
+/* Font Size Styles */
+.ProseMirror [style*="font-size: 12px"] {
+  font-size: 12px !important;
+}
+
+.ProseMirror [style*="font-size: 14px"] {
+  font-size: 14px !important;
+}
+
+.ProseMirror [style*="font-size: 16px"] {
+  font-size: 16px !important;
+}
+
+.ProseMirror [style*="font-size: 18px"] {
+  font-size: 18px !important;
+}
+
+.ProseMirror [style*="font-size: 20px"] {
+  font-size: 20px !important;
+}
+
+.ProseMirror [style*="font-size: 24px"] {
+  font-size: 24px !important;
+}
+
+.ProseMirror [style*="font-size: 28px"] {
+  font-size: 28px !important;
+}
+
+.ProseMirror [style*="font-size: 32px"] {
+  font-size: 32px !important;
+}

@@ -14,7 +14,7 @@ import {
   MessageCircle, 
   Share2,
   Plus,
-  DollarSign
+  IndianRupee
 } from "lucide-react";
 import Link from "next/link";
 import { getDashboardStats, getCampaigns } from "@/lib/database";
@@ -90,7 +90,7 @@ export default function DashboardPage() {
     {
       title: "Total Budget",
       value: formatCurrency(stats.total_budget),
-      icon: DollarSign,
+      icon: IndianRupee,
       description: "Campaign budgets",
     },
     {

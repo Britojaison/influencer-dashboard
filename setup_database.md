@@ -22,6 +22,7 @@ CREATE TABLE campaigns (
   brand_id UUID NOT NULL REFERENCES brands(id) ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL,
   description TEXT,
+  summary TEXT,
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
   status VARCHAR(20) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'active', 'completed', 'paused')),

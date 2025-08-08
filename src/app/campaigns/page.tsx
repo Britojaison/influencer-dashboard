@@ -284,14 +284,14 @@ export default function CampaignsPage() {
                 />
               </div>
               <div className="col-span-2">
-                <Label htmlFor="budget">Budget ($)</Label>
-                <Input
-                  id="budget"
-                  type="number"
-                  value={formData.budget}
-                  onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                  placeholder="Enter campaign budget"
-                />
+                                    <Label htmlFor="budget">Budget (₹)</Label>
+                    <Input
+                      id="budget"
+                      type="number"
+                      value={formData.budget}
+                      onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                      placeholder="Enter campaign budget"
+                    />
               </div>
             </div>
             <DialogFooter>
@@ -422,7 +422,7 @@ export default function CampaignsPage() {
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">
-                      {campaign.budget ? `$${campaign.budget.toLocaleString()}` : "Not set"}
+                      {campaign.budget ? `₹${campaign.budget.toLocaleString()}` : "Not set"}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -528,14 +528,14 @@ export default function CampaignsPage() {
                               />
                             </div>
                             <div className="col-span-2">
-                              <Label htmlFor="edit-budget">Budget ($)</Label>
-                              <Input
-                                id="edit-budget"
-                                type="number"
-                                value={formData.budget}
-                                onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                                placeholder="Enter campaign budget"
-                              />
+                                                          <Label htmlFor="edit-budget">Budget (₹)</Label>
+                            <Input
+                              id="edit-budget"
+                              type="number"
+                              value={formData.budget}
+                              onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                              placeholder="Enter campaign budget"
+                            />
                             </div>
                           </div>
                           <DialogFooter>

@@ -42,6 +42,7 @@ import {
   Play
 } from "lucide-react";
 import { Campaign, CampaignInfluencerDetail } from "@/types/database";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 export default function CampaignManagementPage() {
   const params = useParams();
@@ -56,6 +57,8 @@ export default function CampaignManagementPage() {
   const [isAddInfluencerDialogOpen, setIsAddInfluencerDialogOpen] = useState(false);
   const [editingInfluencer, setEditingInfluencer] = useState<CampaignInfluencerDetail | null>(null);
   const [fetchingMetrics, setFetchingMetrics] = useState(false);
+  const [isSummaryEditing, setIsSummaryEditing] = useState(false);
+  const [summaryContent, setSummaryContent] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     platform: "instagram" as 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'facebook' | 'linkedin',
@@ -84,6 +87,7 @@ export default function CampaignManagementPage() {
         }
         const campaignData = await campaignResponse.json();
         setCampaign(campaignData);
+        setSummaryContent(campaignData.summary || "");
         
         // Fetch influencers data
         const influencersResponse = await fetch(`/api/campaigns/${campaignId}/influencers`);
@@ -933,6 +937,84 @@ export default function CampaignManagementPage() {
                             </TableRow>
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      {/* Campaign Summary */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Campaign Summary</CardTitle>
+              <CardDescription>
+                Add a detailed summary of the campaign performance and insights
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSummaryEditing(!isSummaryEditing)}
+            >
+              {isSummaryEditing ? "Cancel" : "Edit Summary"}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isSummaryEditing ? (
+            <div className="space-y-4">
+              <RichTextEditor
+                value={summaryContent}
+                onChange={setSummaryContent}
+                placeholder="Write a detailed summary of the campaign..."
+                className="min-h-[300px]"
+              />
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsSummaryEditing(false);
+                    setSummaryContent(campaign?.summary || "");
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(`/api/campaigns/${campaignId}`, {
+                        method: 'PUT',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          summary: summaryContent,
+                        }),
+                      });
+                      
+                      if (response.ok) {
+                        setCampaign(prev => prev ? { ...prev, summary: summaryContent } : null);
+                        setIsSummaryEditing(false);
+                      } else {
+                        console.error('Failed to update summary');
+                      }
+                    } catch (error) {
+                      console.error('Error updating summary:', error);
+                    }
+                  }}
+                >
+                  Save Summary
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="prose prose-sm max-w-none">
+              {campaign?.summary ? (
+                <div dangerouslySetInnerHTML={{ __html: campaign.summary }} />
+              ) : (
+                <p className="text-gray-500 italic">No summary added yet. Click "Edit Summary" to add one.</p>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -14,6 +14,7 @@ export interface Campaign {
   brand_id: string;
   name: string;
   description?: string;
+  summary?: string;
   start_date: string;
   end_date: string;
   status: 'draft' | 'active' | 'completed' | 'paused';
