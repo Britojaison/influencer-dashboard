@@ -299,17 +299,17 @@ export default function CampaignManagementPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button variant="ghost" onClick={() => router.back()}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+        <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+          <Button variant="ghost" onClick={() => router.back()} className="w-fit">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{campaign.name}</h1>
-            <p className="text-gray-600">{campaign.brand?.name}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{campaign.name}</h1>
+            <p className="text-sm sm:text-base text-gray-600">{campaign.brand?.name}</p>
           </div>
         </div>
         <Badge className={getStatusColor(campaign.status)}>
@@ -318,14 +318,14 @@ export default function CampaignManagementPage() {
       </div>
 
       {/* Campaign Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Influencers</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{influencers.length}</div>
+            <div className="text-xl sm:text-2xl font-bold">{influencers.length}</div>
             <p className="text-xs text-muted-foreground">Active influencers</p>
           </CardContent>
         </Card>
@@ -336,7 +336,7 @@ export default function CampaignManagementPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl sm:text-2xl font-bold">
               {influencers.reduce((sum, inf) => sum + inf.likes + inf.comments + inf.shares, 0).toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">Likes, comments, shares</p>
@@ -349,7 +349,7 @@ export default function CampaignManagementPage() {
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl sm:text-2xl font-bold">
               {influencers.length > 0 
                 ? (influencers.reduce((sum, inf) => sum + inf.likes + inf.comments + inf.shares, 0) / influencers.length).toFixed(0)
                 : "0"
@@ -360,10 +360,91 @@ export default function CampaignManagementPage() {
         </Card>
       </div>
 
+      {/* Campaign Summary */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+            <div>
+              <CardTitle>Campaign Summary</CardTitle>
+              <CardDescription>
+                Add a detailed summary of the campaign performance and insights
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSummaryEditing(!isSummaryEditing)}
+              className="w-full sm:w-auto"
+            >
+              {isSummaryEditing ? "Cancel" : "Edit Summary"}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isSummaryEditing ? (
+            <div className="space-y-4">
+              <RichTextEditor
+                value={summaryContent}
+                onChange={setSummaryContent}
+                placeholder="Write a detailed summary of the campaign..."
+                className="min-h-[300px]"
+              />
+              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsSummaryEditing(false);
+                    setSummaryContent(campaign?.summary || "");
+                  }}
+                  className="w-full sm:w-auto"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(`/api/campaigns/${campaignId}`, {
+                        method: 'PUT',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          summary: summaryContent,
+                        }),
+                      });
+                      
+                      if (response.ok) {
+                        setCampaign(prev => prev ? { ...prev, summary: summaryContent } : null);
+                        setIsSummaryEditing(false);
+                      } else {
+                        console.error('Failed to update summary');
+                      }
+                    } catch (error) {
+                      console.error('Error updating summary:', error);
+                    }
+                  }}
+                  className="w-full sm:w-auto"
+                >
+                  Save Summary
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="prose prose-sm max-w-none">
+              {campaign?.summary ? (
+                <div dangerouslySetInnerHTML={{ __html: campaign.summary }} />
+              ) : (
+                <p className="text-gray-500 italic">No summary added yet. Click &quot;Edit Summary&quot; to add one.</p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Influencers Section */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
             <div>
               <CardTitle>Campaign Influencers</CardTitle>
               <CardDescription>
@@ -372,22 +453,22 @@ export default function CampaignManagementPage() {
             </div>
             <Dialog open={isAddInfluencerDialogOpen} onOpenChange={setIsAddInfluencerDialogOpen}>
               <DialogTrigger asChild>
-                <Button disabled={!tableExists}>
+                <Button disabled={!tableExists} className="w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Influencer
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Add New Influencer</DialogTitle>
                   <DialogDescription>
                     Add influencer details and performance metrics.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="grid grid-cols-2 gap-4 mt-6">
-                  <div className="col-span-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                  <div className="col-span-1 sm:col-span-2">
                     <Label htmlFor="post_url">Post URL</Label>
-                    <div className="flex space-x-2">
+                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                       <Input
                         id="post_url"
                         value={formData.post_url}
@@ -434,6 +515,7 @@ export default function CampaignManagementPage() {
                             }
                           }
                         }}
+                        className="w-full sm:w-auto"
                       >
                         {fetchingMetrics ? (
                           <>
@@ -446,7 +528,7 @@ export default function CampaignManagementPage() {
                       </Button>
                     </div>
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-1 sm:col-span-2">
                     <Label htmlFor="name">Influencer Name</Label>
                     <Input
                       id="name"
@@ -553,7 +635,7 @@ export default function CampaignManagementPage() {
                       placeholder="0"
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-1 sm:col-span-2">
                     <Label htmlFor="notes">Notes</Label>
                     <Textarea
                       id="notes"
@@ -614,72 +696,75 @@ export default function CampaignManagementPage() {
           </div>
 
           {/* Influencers Table */}
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Influencer</TableHead>
-                <TableHead>Platform</TableHead>
-                <TableHead>Content</TableHead>
-                <TableHead>Likes</TableHead>
-                <TableHead>Comments</TableHead>
-                <TableHead>Shares</TableHead>
-                <TableHead>Views</TableHead>
-
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredInfluencers.map((influencer) => (
-                <TableRow key={influencer.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{influencer.name}</div>
-                      <div className="text-sm text-gray-500">{influencer.username}</div>
-                      <div className="text-xs text-gray-400">{influencer.followers_count.toLocaleString()} followers</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      {getPlatformIcon(influencer.platform)}
-                      <span className="capitalize">{influencer.platform}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="text-sm font-medium">{influencer.content_type || "N/A"}</div>
-                      {influencer.post_url && (
-                        <a
-                          href={influencer.post_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center text-blue-600 hover:text-blue-800 text-xs"
-                        >
-                          <ExternalLink className="h-3 w-3 mr-1" />
-                          View Post
-                        </a>
-                      )}
-                    </div>
-                  </TableCell>
-                                      <TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Influencer</TableHead>
+                  <TableHead className="hidden sm:table-cell">Platform</TableHead>
+                  <TableHead className="hidden lg:table-cell">Content</TableHead>
+                  <TableHead className="hidden md:table-cell">Likes</TableHead>
+                  <TableHead className="hidden md:table-cell">Comments</TableHead>
+                  <TableHead className="hidden lg:table-cell">Shares</TableHead>
+                  <TableHead className="hidden lg:table-cell">Views</TableHead>
+                  <TableHead className="hidden sm:table-cell">Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredInfluencers.map((influencer) => (
+                  <TableRow key={influencer.id}>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{influencer.name}</div>
+                        <div className="text-sm text-gray-500">{influencer.username}</div>
+                        <div className="text-xs text-gray-400">{influencer.followers_count.toLocaleString()} followers</div>
+                        <div className="sm:hidden text-xs text-gray-400 mt-1">
+                          {influencer.platform} • {influencer.likes} likes • {influencer.comments} comments
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <div className="flex items-center space-x-2">
+                        {getPlatformIcon(influencer.platform)}
+                        <span className="capitalize">{influencer.platform}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <div>
+                        <div className="text-sm font-medium">{influencer.content_type || "N/A"}</div>
+                        {influencer.post_url && (
+                          <a
+                            href={influencer.post_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center text-blue-600 hover:text-blue-800 text-xs"
+                          >
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            View Post
+                          </a>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <div className="flex items-center text-sm">
                         <Heart className="h-3 w-3 mr-1 text-red-500" />
                         {influencer.likes.toLocaleString()}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <div className="flex items-center text-sm">
                         <MessageCircle className="h-3 w-3 mr-1 text-blue-500" />
                         {influencer.comments.toLocaleString()}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       <div className="flex items-center text-sm">
                         <Share2 className="h-3 w-3 mr-1 text-green-500" />
                         {influencer.shares.toLocaleString()}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       {influencer.views > 0 ? (
                         <div className="flex items-center text-sm">
                           <Play className="h-3 w-3 mr-1 text-purple-500" />
@@ -690,331 +775,254 @@ export default function CampaignManagementPage() {
                       )}
                     </TableCell>
 
-                  <TableCell>
-                    <Badge className={getStatusColor(influencer.status)}>
-                      {influencer.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openEditDialog(influencer)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>Edit Influencer</DialogTitle>
-                            <DialogDescription>
-                              Update influencer information and metrics.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="grid grid-cols-2 gap-4 mt-6">
-                            <div className="col-span-2">
-                              <Label htmlFor="edit-post_url">Post URL</Label>
-                              <div className="flex space-x-2">
-                                <Input
-                                  id="edit-post_url"
-                                  value={formData.post_url}
-                                  onChange={(e) => setFormData({ ...formData, post_url: e.target.value })}
-                                  placeholder="https://..."
-                                  className="flex-1"
-                                />
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={fetchingMetrics || !formData.post_url}
-                                  onClick={async () => {
-                                    if (formData.post_url) {
-                                      try {
-                                        setFetchingMetrics(true);
-                                        const response = await fetch('/api/webhook/fetch-post-metrics', {
-                                          method: 'POST',
-                                          headers: {
-                                            'Content-Type': 'application/json',
-                                          },
-                                          body: JSON.stringify({
-                                            postUrl: formData.post_url
-                                          }),
-                                        });
-                                        
-                                        if (response.ok) {
-                                          const metrics = await response.json();
-                                          setFormData({
-                                            ...formData,
-                                            name: metrics.name || formData.name,
-                                            username: metrics.username ? `@${metrics.username}` : formData.username,
-                                            likes: metrics.likes?.toString() || formData.likes,
-                                            comments: metrics.comments?.toString() || formData.comments,
-                                            views: metrics.views?.toString() || formData.views,
+                    <TableCell className="hidden sm:table-cell">
+                      <Badge className={getStatusColor(influencer.status)}>
+                        {influencer.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openEditDialog(influencer)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle>Edit Influencer</DialogTitle>
+                              <DialogDescription>
+                                Update influencer information and metrics.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                              <div className="col-span-1 sm:col-span-2">
+                                <Label htmlFor="edit-post_url">Post URL</Label>
+                                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                                  <Input
+                                    id="edit-post_url"
+                                    value={formData.post_url}
+                                    onChange={(e) => setFormData({ ...formData, post_url: e.target.value })}
+                                    placeholder="https://..."
+                                    className="flex-1"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={fetchingMetrics || !formData.post_url}
+                                    onClick={async () => {
+                                      if (formData.post_url) {
+                                        try {
+                                          setFetchingMetrics(true);
+                                          const response = await fetch('/api/webhook/fetch-post-metrics', {
+                                            method: 'POST',
+                                            headers: {
+                                              'Content-Type': 'application/json',
+                                            },
+                                            body: JSON.stringify({
+                                              postUrl: formData.post_url
+                                            }),
                                           });
-                                        } else {
-                                          console.error('Failed to fetch metrics:', response.statusText);
+                                          
+                                          if (response.ok) {
+                                            const metrics = await response.json();
+                                            setFormData({
+                                              ...formData,
+                                              name: metrics.name || formData.name,
+                                              username: metrics.username ? `@${metrics.username}` : formData.username,
+                                              likes: metrics.likes?.toString() || formData.likes,
+                                              comments: metrics.comments?.toString() || formData.comments,
+                                              views: metrics.views?.toString() || formData.views,
+                                            });
+                                          } else {
+                                            console.error('Failed to fetch metrics:', response.statusText);
+                                          }
+                                        } catch (error) {
+                                          console.error('Error fetching metrics:', error);
+                                        } finally {
+                                          setFetchingMetrics(false);
                                         }
-                                      } catch (error) {
-                                        console.error('Error fetching metrics:', error);
-                                      } finally {
-                                        setFetchingMetrics(false);
                                       }
-                                    }
-                                  }}
-                                >
-                                  {fetchingMetrics ? (
-                                    <>
-                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2"></div>
-                                      Fetching...
-                                    </>
-                                  ) : (
-                                    'Fetch Metrics'
-                                  )}
-                                </Button>
+                                    }}
+                                    className="w-full sm:w-auto"
+                                  >
+                                    {fetchingMetrics ? (
+                                      <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2"></div>
+                                        Fetching...
+                                      </>
+                                    ) : (
+                                      'Fetch Metrics'
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="col-span-1 sm:col-span-2">
+                                <Label htmlFor="edit-name">Influencer Name</Label>
+                                <Input
+                                  id="edit-name"
+                                  value={formData.name}
+                                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                  placeholder="Enter influencer name"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="edit-platform">Platform</Label>
+                                <Select value={formData.platform} onValueChange={(value: 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'facebook' | 'linkedin') => setFormData({ ...formData, platform: value })}>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="instagram">Instagram</SelectItem>
+                                    <SelectItem value="tiktok">TikTok</SelectItem>
+                                    <SelectItem value="youtube">YouTube</SelectItem>
+                                    <SelectItem value="twitter">Twitter</SelectItem>
+                                    <SelectItem value="facebook">Facebook</SelectItem>
+                                    <SelectItem value="linkedin">LinkedIn</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label htmlFor="edit-username">Username</Label>
+                                <Input
+                                  id="edit-username"
+                                  value={formData.username}
+                                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                                  placeholder="@username"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="edit-content_type">Content Type</Label>
+                                <Input
+                                  id="edit-content_type"
+                                  value={formData.content_type}
+                                  onChange={(e) => setFormData({ ...formData, content_type: e.target.value })}
+                                  placeholder="e.g., Photo Post, Video, Story"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="edit-status">Status</Label>
+                                <Select value={formData.status} onValueChange={(value: 'active' | 'inactive' | 'completed') => setFormData({ ...formData, status: value })}>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="active">Active</SelectItem>
+                                    <SelectItem value="inactive">Inactive</SelectItem>
+                                    <SelectItem value="completed">Completed</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label htmlFor="edit-likes">Likes</Label>
+                                <Input
+                                  id="edit-likes"
+                                  type="number"
+                                  value={formData.likes}
+                                  onChange={(e) => setFormData({ ...formData, likes: e.target.value })}
+                                  placeholder="0"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="edit-comments">Comments</Label>
+                                <Input
+                                  id="edit-comments"
+                                  type="number"
+                                  value={formData.comments}
+                                  onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
+                                  placeholder="0"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="edit-shares">Shares</Label>
+                                <Input
+                                  id="edit-shares"
+                                  type="number"
+                                  value={formData.shares}
+                                  onChange={(e) => setFormData({ ...formData, shares: e.target.value })}
+                                  placeholder="0"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="edit-views">Views</Label>
+                                <Input
+                                  id="edit-views"
+                                  type="number"
+                                  value={formData.views}
+                                  onChange={(e) => setFormData({ ...formData, views: e.target.value })}
+                                  placeholder="0"
+                                />
+                              </div>
+
+                              <div>
+                                <Label htmlFor="edit-followers_count">Followers Count</Label>
+                                <Input
+                                  id="edit-followers_count"
+                                  type="number"
+                                  value={formData.followers_count}
+                                  onChange={(e) => setFormData({ ...formData, followers_count: e.target.value })}
+                                  placeholder="0"
+                                />
+                              </div>
+                              <div className="col-span-1 sm:col-span-2">
+                                <Label htmlFor="edit-notes">Notes</Label>
+                                <Textarea
+                                  id="edit-notes"
+                                  value={formData.notes}
+                                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                  placeholder="Additional notes..."
+                                />
                               </div>
                             </div>
-                            <div className="col-span-2">
-                              <Label htmlFor="edit-name">Influencer Name</Label>
-                              <Input
-                                id="edit-name"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                placeholder="Enter influencer name"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-platform">Platform</Label>
-                              <Select value={formData.platform} onValueChange={(value: 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'facebook' | 'linkedin') => setFormData({ ...formData, platform: value })}>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="instagram">Instagram</SelectItem>
-                                  <SelectItem value="tiktok">TikTok</SelectItem>
-                                  <SelectItem value="youtube">YouTube</SelectItem>
-                                  <SelectItem value="twitter">Twitter</SelectItem>
-                                  <SelectItem value="facebook">Facebook</SelectItem>
-                                  <SelectItem value="linkedin">LinkedIn</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-username">Username</Label>
-                              <Input
-                                id="edit-username"
-                                value={formData.username}
-                                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                                placeholder="@username"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-content_type">Content Type</Label>
-                              <Input
-                                id="edit-content_type"
-                                value={formData.content_type}
-                                onChange={(e) => setFormData({ ...formData, content_type: e.target.value })}
-                                placeholder="e.g., Photo Post, Video, Story"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-status">Status</Label>
-                              <Select value={formData.status} onValueChange={(value: 'active' | 'inactive' | 'completed') => setFormData({ ...formData, status: value })}>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="active">Active</SelectItem>
-                                  <SelectItem value="inactive">Inactive</SelectItem>
-                                  <SelectItem value="completed">Completed</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-likes">Likes</Label>
-                              <Input
-                                id="edit-likes"
-                                type="number"
-                                value={formData.likes}
-                                onChange={(e) => setFormData({ ...formData, likes: e.target.value })}
-                                placeholder="0"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-comments">Comments</Label>
-                              <Input
-                                id="edit-comments"
-                                type="number"
-                                value={formData.comments}
-                                onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
-                                placeholder="0"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-shares">Shares</Label>
-                              <Input
-                                id="edit-shares"
-                                type="number"
-                                value={formData.shares}
-                                onChange={(e) => setFormData({ ...formData, shares: e.target.value })}
-                                placeholder="0"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-views">Views</Label>
-                              <Input
-                                id="edit-views"
-                                type="number"
-                                value={formData.views}
-                                onChange={(e) => setFormData({ ...formData, views: e.target.value })}
-                                placeholder="0"
-                              />
-                            </div>
-
-                            <div>
-                              <Label htmlFor="edit-followers_count">Followers Count</Label>
-                              <Input
-                                id="edit-followers_count"
-                                type="number"
-                                value={formData.followers_count}
-                                onChange={(e) => setFormData({ ...formData, followers_count: e.target.value })}
-                                placeholder="0"
-                              />
-                            </div>
-                            <div className="col-span-2">
-                              <Label htmlFor="edit-notes">Notes</Label>
-                              <Textarea
-                                id="edit-notes"
-                                value={formData.notes}
-                                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                placeholder="Additional notes..."
-                              />
-                            </div>
-                          </div>
-                          <DialogFooter>
-                            <Button variant="outline" onClick={() => setEditingInfluencer(null)}>
-                              Cancel
-                            </Button>
-                            <Button onClick={handleEditInfluencer}>
-                              Update Influencer
-                            </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteInfluencer(influencer.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </div>
+                            <DialogFooter>
+                              <Button variant="outline" onClick={() => setEditingInfluencer(null)}>
+                                Cancel
+                              </Button>
+                              <Button onClick={handleEditInfluencer}>
+                                Update Influencer
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteInfluencer(influencer.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {/* Totals Row */}
+                <TableRow className="bg-gray-50 font-semibold">
+                  <TableCell colSpan={3} className="text-center font-bold">
+                    TOTALS
                   </TableCell>
+                  <TableCell className="hidden md:table-cell text-center font-bold">
+                    {influencers.reduce((sum, inf) => sum + inf.likes, 0).toLocaleString()}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell text-center font-bold">
+                    {influencers.reduce((sum, inf) => sum + inf.comments, 0).toLocaleString()}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell text-center font-bold">
+                    {influencers.reduce((sum, inf) => sum + inf.shares, 0).toLocaleString()}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell text-center font-bold">
+                    {influencers.reduce((sum, inf) => sum + inf.views, 0).toLocaleString()}
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell"></TableCell>
+                  <TableCell></TableCell>
                 </TableRow>
-              ))}
-              {/* Totals Row */}
-              <TableRow className="bg-gray-50 font-semibold">
-                <TableCell colSpan={3} className="text-center font-bold">
-                  TOTALS
-                </TableCell>
-                <TableCell className="text-center font-bold">
-                  {influencers.reduce((sum, inf) => sum + inf.likes, 0).toLocaleString()}
-                </TableCell>
-                <TableCell className="text-center font-bold">
-                  {influencers.reduce((sum, inf) => sum + inf.comments, 0).toLocaleString()}
-                </TableCell>
-                <TableCell className="text-center font-bold">
-                  {influencers.reduce((sum, inf) => sum + inf.shares, 0).toLocaleString()}
-                </TableCell>
-                <TableCell className="text-center font-bold">
-                  {influencers.reduce((sum, inf) => sum + inf.views, 0).toLocaleString()}
-                </TableCell>
-                <TableCell></TableCell>
-                <TableCell></TableCell>
-                <TableCell></TableCell>
-                            </TableRow>
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Campaign Summary */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Campaign Summary</CardTitle>
-              <CardDescription>
-                Add a detailed summary of the campaign performance and insights
-              </CardDescription>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsSummaryEditing(!isSummaryEditing)}
-            >
-              {isSummaryEditing ? "Cancel" : "Edit Summary"}
-            </Button>
+              </TableBody>
+            </Table>
           </div>
-        </CardHeader>
-        <CardContent>
-          {isSummaryEditing ? (
-            <div className="space-y-4">
-              <RichTextEditor
-                value={summaryContent}
-                onChange={setSummaryContent}
-                placeholder="Write a detailed summary of the campaign..."
-                className="min-h-[300px]"
-              />
-              <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsSummaryEditing(false);
-                    setSummaryContent(campaign?.summary || "");
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={async () => {
-                    try {
-                      const response = await fetch(`/api/campaigns/${campaignId}`, {
-                        method: 'PUT',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                          summary: summaryContent,
-                        }),
-                      });
-                      
-                      if (response.ok) {
-                        setCampaign(prev => prev ? { ...prev, summary: summaryContent } : null);
-                        setIsSummaryEditing(false);
-                      } else {
-                        console.error('Failed to update summary');
-                      }
-                    } catch (error) {
-                      console.error('Error updating summary:', error);
-                    }
-                  }}
-                >
-                  Save Summary
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="prose prose-sm max-w-none">
-              {campaign?.summary ? (
-                <div dangerouslySetInnerHTML={{ __html: campaign.summary }} />
-              ) : (
-                <p className="text-gray-500 italic">No summary added yet. Click &quot;Edit Summary&quot; to add one.</p>
-              )}
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

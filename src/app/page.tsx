@@ -101,14 +101,14 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                     <p className="text-gray-600">Welcome back! Here&apos;s what&apos;s happening with your campaigns.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-sm sm:text-base text-gray-600">Welcome back! Here&apos;s what&apos;s happening with your campaigns.</p>
         </div>
         <Link href="/campaigns">
-          <Button>
+          <Button className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             New Campaign
           </Button>
@@ -116,7 +116,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {dashboardStats.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -126,14 +126,14 @@ export default function DashboardPage() {
               <stat.icon className="h-4 w-4 text-gray-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
+              <div className="text-xl sm:text-2xl font-bold text-gray-900">{stat.value}</div>
               <p className="text-xs text-gray-500">{stat.description}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Recent Campaigns */}
         <Card>
           <CardHeader>
@@ -148,25 +148,26 @@ export default function DashboardPage() {
                 recentCampaigns.map((campaign) => (
                   <div
                     key={campaign.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors space-y-3 sm:space-y-0"
                   >
                     <div className="flex-1">
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                         <h3 className="font-medium text-gray-900">{campaign.name}</h3>
                         <Badge
                           variant={campaign.status === "active" ? "default" : "secondary"}
+                          className="w-fit"
                         >
                           {campaign.status}
                         </Badge>
                       </div>
                       <p className="text-sm text-gray-500">{campaign.brand?.name}</p>
-                      <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
+                      <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 mt-2 text-sm text-gray-500">
                         <span>{campaign.budget ? formatCurrency(campaign.budget) : "No budget set"}</span>
                         <span>{new Date(campaign.start_date).toLocaleDateString()} - {new Date(campaign.end_date).toLocaleDateString()}</span>
                       </div>
                     </div>
                     <Link href={`/campaigns/${campaign.id}`}>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" className="w-full sm:w-auto">
                         View
                       </Button>
                     </Link>
@@ -194,7 +195,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="space-y-4">
               <Link href="/campaigns">
-                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer space-y-3 sm:space-y-0">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                       <Calendar className="h-5 w-5 text-blue-600" />
@@ -204,14 +205,14 @@ export default function DashboardPage() {
                       <p className="text-sm text-gray-500">View and edit all campaigns</p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="w-full sm:w-auto">
                     View
                   </Button>
                 </div>
               </Link>
 
               <Link href="/brands">
-                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer space-y-3 sm:space-y-0">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                       <BarChart3 className="h-5 w-5 text-green-600" />
@@ -221,7 +222,7 @@ export default function DashboardPage() {
                       <p className="text-sm text-gray-500">Add and edit brand profiles</p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="w-full sm:w-auto">
                     View
                   </Button>
                 </div>

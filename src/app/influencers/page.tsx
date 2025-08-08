@@ -90,11 +90,11 @@ export default function InfluencersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Influencers</h1>
-        <p className="text-gray-600">All influencers across all campaigns</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Influencers</h1>
+        <p className="text-sm sm:text-base text-gray-600">All influencers across all campaigns</p>
       </div>
 
       {/* Search */}
@@ -121,50 +121,55 @@ export default function InfluencersPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Influencer</TableHead>
-                <TableHead>Platform</TableHead>
-                <TableHead>Username</TableHead>
-                <TableHead>Followers</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredInfluencers.map((influencer) => (
-                <TableRow key={influencer.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{influencer.name || "N/A"}</div>
-                      <div className="text-sm text-gray-500">{influencer.content_type || "N/A"}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      {getPlatformIcon(influencer.platform)}
-                      <span className="capitalize">{influencer.platform}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {influencer.username || "N/A"}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {influencer.followers_count ? influencer.followers_count.toLocaleString() : "N/A"}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(influencer.status)}>
-                      {influencer.status}
-                    </Badge>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Influencer</TableHead>
+                  <TableHead className="hidden sm:table-cell">Platform</TableHead>
+                  <TableHead className="hidden md:table-cell">Username</TableHead>
+                  <TableHead className="hidden lg:table-cell">Followers</TableHead>
+                  <TableHead className="hidden sm:table-cell">Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredInfluencers.map((influencer) => (
+                  <TableRow key={influencer.id}>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{influencer.name || "N/A"}</div>
+                        <div className="text-sm text-gray-500">{influencer.content_type || "N/A"}</div>
+                        <div className="sm:hidden text-xs text-gray-400 mt-1">
+                          {influencer.platform} • {influencer.username} • {influencer.followers_count ? influencer.followers_count.toLocaleString() : "N/A"} followers
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <div className="flex items-center space-x-2">
+                        {getPlatformIcon(influencer.platform)}
+                        <span className="capitalize">{influencer.platform}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <div className="text-sm">
+                        {influencer.username || "N/A"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <div className="text-sm">
+                        {influencer.followers_count ? influencer.followers_count.toLocaleString() : "N/A"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <Badge className={getStatusColor(influencer.status)}>
+                        {influencer.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -143,28 +143,28 @@ export default function BrandsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Brands</h1>
-          <p className="text-gray-600">Manage your brand partnerships</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Brands</h1>
+          <p className="text-sm sm:text-base text-gray-600">Manage your brand profiles and campaigns</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               New Brand
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add New Brand</DialogTitle>
+              <DialogTitle>Create New Brand</DialogTitle>
               <DialogDescription>
-                Add a new brand to your influencer dashboard.
+                Add a new brand to your influencer marketing portfolio.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="col-span-1 sm:col-span-2">
                 <Label htmlFor="name">Brand Name</Label>
                 <Input
                   id="name"
@@ -173,7 +173,7 @@ export default function BrandsPage() {
                   placeholder="Enter brand name"
                 />
               </div>
-              <div className="col-span-2">
+              <div className="col-span-1 sm:col-span-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
@@ -188,7 +188,7 @@ export default function BrandsPage() {
                   id="website_url"
                   value={formData.website_url}
                   onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
-                  placeholder="https://example.com"
+                  placeholder="https://..."
                 />
               </div>
               <div>
@@ -197,7 +197,7 @@ export default function BrandsPage() {
                   id="industry"
                   value={formData.industry}
                   onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                  placeholder="e.g., Fashion, Technology"
+                  placeholder="e.g., Fashion, Tech, Food"
                 />
               </div>
             </div>
@@ -205,7 +205,7 @@ export default function BrandsPage() {
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleCreateBrand}>Add Brand</Button>
+              <Button onClick={handleCreateBrand}>Create Brand</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -235,129 +235,142 @@ export default function BrandsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Brand</TableHead>
-                <TableHead>Industry</TableHead>
-                <TableHead>Website</TableHead>
-                <TableHead>Campaigns</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredBrands.map((brand) => (
-                <TableRow key={brand.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{brand.name}</div>
-                      <div className="text-sm text-gray-500 max-w-xs truncate">
-                        {brand.description}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {brand.industry && (
-                      <Badge variant="secondary">{brand.industry}</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {brand.website_url && (
-                      <a
-                        href={brand.website_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center text-blue-600 hover:text-blue-800"
-                      >
-                        <Globe className="h-4 w-4 mr-1" />
-                        Visit
-                      </a>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-1">
-                      <Users className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm">{campaignCounts[brand.id] || 0}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openEditDialog(brand)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>Edit Brand</DialogTitle>
-                            <DialogDescription>
-                              Update brand information.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="col-span-2">
-                              <Label htmlFor="edit-name">Brand Name</Label>
-                              <Input
-                                id="edit-name"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                placeholder="Enter brand name"
-                              />
-                            </div>
-                            <div className="col-span-2">
-                              <Label htmlFor="edit-description">Description</Label>
-                              <Textarea
-                                id="edit-description"
-                                value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                placeholder="Enter brand description"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-website_url">Website URL</Label>
-                              <Input
-                                id="edit-website_url"
-                                value={formData.website_url}
-                                onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
-                                placeholder="https://example.com"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-industry">Industry</Label>
-                              <Input
-                                id="edit-industry"
-                                value={formData.industry}
-                                onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                                placeholder="e.g., Fashion, Technology"
-                              />
-                            </div>
-                          </div>
-                          <DialogFooter>
-                            <Button variant="outline" onClick={() => setEditingBrand(null)}>
-                              Cancel
-                            </Button>
-                            <Button onClick={handleEditBrand}>Update Brand</Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteBrand(brand.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Brand</TableHead>
+                  <TableHead className="hidden lg:table-cell">Description</TableHead>
+                  <TableHead className="hidden md:table-cell">Website</TableHead>
+                  <TableHead className="hidden sm:table-cell">Industry</TableHead>
+                  <TableHead className="hidden sm:table-cell">Campaigns</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredBrands.map((brand) => (
+                  <TableRow key={brand.id}>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{brand.name}</div>
+                        <div className="text-sm text-gray-500 max-w-xs truncate">
+                          {brand.description}
+                        </div>
+                        <div className="sm:hidden text-xs text-gray-400 mt-1">
+                          {brand.industry} • {campaignCounts[brand.id] || 0} campaigns
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <div className="text-sm text-gray-500 max-w-xs truncate">
+                        {brand.description || "No description"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {brand.website_url ? (
+                        <a
+                          href={brand.website_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center text-blue-600 hover:text-blue-800 text-sm"
+                        >
+                          <Globe className="h-4 w-4 mr-1" />
+                          Visit Site
+                        </a>
+                      ) : (
+                        <span className="text-gray-400 text-sm">No website</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <div className="text-sm">
+                        {brand.industry || "Not specified"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <div className="flex items-center space-x-1">
+                        <Users className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm">{campaignCounts[brand.id] || 0}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openEditDialog(brand)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle>Edit Brand</DialogTitle>
+                              <DialogDescription>
+                                Update brand information.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="col-span-1 sm:col-span-2">
+                                <Label htmlFor="edit-name">Brand Name</Label>
+                                <Input
+                                  id="edit-name"
+                                  value={formData.name}
+                                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                  placeholder="Enter brand name"
+                                />
+                              </div>
+                              <div className="col-span-1 sm:col-span-2">
+                                <Label htmlFor="edit-description">Description</Label>
+                                <Textarea
+                                  id="edit-description"
+                                  value={formData.description}
+                                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                  placeholder="Enter brand description"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="edit-website_url">Website URL</Label>
+                                <Input
+                                  id="edit-website_url"
+                                  value={formData.website_url}
+                                  onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
+                                  placeholder="https://..."
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="edit-industry">Industry</Label>
+                                <Input
+                                  id="edit-industry"
+                                  value={formData.industry}
+                                  onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                                  placeholder="e.g., Fashion, Tech, Food"
+                                />
+                              </div>
+                            </div>
+                            <DialogFooter>
+                              <Button variant="outline" onClick={() => setEditingBrand(null)}>
+                                Cancel
+                              </Button>
+                              <Button onClick={handleEditBrand}>Update Brand</Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteBrand(brand.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

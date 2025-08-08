@@ -198,28 +198,28 @@ export default function CampaignsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Campaigns</h1>
-          <p className="text-gray-600">Manage influencer campaigns across all brands</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Campaigns</h1>
+          <p className="text-sm sm:text-base text-gray-600">Manage influencer campaigns across all brands</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               New Campaign
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Campaign</DialogTitle>
               <DialogDescription>
                 Set up a new influencer campaign for your brand.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="col-span-1 sm:col-span-2">
                 <Label htmlFor="name">Campaign Name</Label>
                 <Input
                   id="name"
@@ -228,7 +228,7 @@ export default function CampaignsPage() {
                   placeholder="Enter campaign name"
                 />
               </div>
-              <div className="col-span-2">
+              <div className="col-span-1 sm:col-span-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
@@ -283,15 +283,15 @@ export default function CampaignsPage() {
                   onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                 />
               </div>
-              <div className="col-span-2">
-                                    <Label htmlFor="budget">Budget (₹)</Label>
-                    <Input
-                      id="budget"
-                      type="number"
-                      value={formData.budget}
-                      onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                      placeholder="Enter campaign budget"
-                    />
+              <div className="col-span-1 sm:col-span-2">
+                <Label htmlFor="budget">Budget (₹)</Label>
+                <Input
+                  id="budget"
+                  type="number"
+                  value={formData.budget}
+                  onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                  placeholder="Enter campaign budget"
+                />
               </div>
             </div>
             <DialogFooter>
@@ -307,7 +307,7 @@ export default function CampaignsPage() {
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
@@ -383,182 +383,188 @@ export default function CampaignsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Campaign</TableHead>
-                <TableHead>Brand</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date Range</TableHead>
-                <TableHead>Budget</TableHead>
-                <TableHead>Influencers</TableHead>
-                <TableHead>Manage</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCampaigns.map((campaign) => (
-                <TableRow key={campaign.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{campaign.name}</div>
-                      <div className="text-sm text-gray-500 max-w-xs truncate">
-                        {campaign.description}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium">{campaign.brand?.name}</div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(campaign.status)}>
-                      {campaign.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {format(new Date(campaign.start_date), "MMM dd")} - {format(new Date(campaign.end_date), "MMM dd, yyyy")}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {campaign.budget ? `₹${campaign.budget.toLocaleString()}` : "Not set"}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-1">
-                      <Users className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm">{influencerCounts[campaign.id] || 0}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => window.location.href = `/campaigns/${campaign.id}`}
-                    >
-                      Manage
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="sm">
-                        <Share2 className="h-4 w-4" />
-                      </Button>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openEditDialog(campaign)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>Edit Campaign</DialogTitle>
-                            <DialogDescription>
-                              Update campaign information.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="col-span-2">
-                              <Label htmlFor="edit-name">Campaign Name</Label>
-                              <Input
-                                id="edit-name"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                placeholder="Enter campaign name"
-                              />
-                            </div>
-                            <div className="col-span-2">
-                              <Label htmlFor="edit-description">Description</Label>
-                              <Textarea
-                                id="edit-description"
-                                value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                placeholder="Enter campaign description"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-brand">Brand</Label>
-                              <Select value={formData.brand_id} onValueChange={(value) => setFormData({ ...formData, brand_id: value })}>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select brand" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {brands.map((brand) => (
-                                    <SelectItem key={brand.id} value={brand.id}>
-                                      {brand.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-status">Status</Label>
-                              <Select value={formData.status} onValueChange={(value: 'draft' | 'active' | 'completed' | 'paused') => setFormData({ ...formData, status: value })}>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="draft">Draft</SelectItem>
-                                  <SelectItem value="active">Active</SelectItem>
-                                  <SelectItem value="completed">Completed</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-start_date">Start Date</Label>
-                              <Input
-                                id="edit-start_date"
-                                type="date"
-                                value={formData.start_date}
-                                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-end_date">End Date</Label>
-                              <Input
-                                id="edit-end_date"
-                                type="date"
-                                value={formData.end_date}
-                                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                              />
-                            </div>
-                            <div className="col-span-2">
-                                                          <Label htmlFor="edit-budget">Budget (₹)</Label>
-                            <Input
-                              id="edit-budget"
-                              type="number"
-                              value={formData.budget}
-                              onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                              placeholder="Enter campaign budget"
-                            />
-                            </div>
-                          </div>
-                          <DialogFooter>
-                            <Button variant="outline" onClick={() => setEditingCampaign(null)}>
-                              Cancel
-                            </Button>
-                            <Button onClick={handleEditCampaign}>Update Campaign</Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteCampaign(campaign.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Campaign</TableHead>
+                  <TableHead className="hidden sm:table-cell">Brand</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden lg:table-cell">Date Range</TableHead>
+                  <TableHead className="hidden md:table-cell">Budget</TableHead>
+                  <TableHead className="hidden sm:table-cell">Influencers</TableHead>
+                  <TableHead>Manage</TableHead>
+                  <TableHead className="hidden md:table-cell">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredCampaigns.map((campaign) => (
+                  <TableRow key={campaign.id}>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{campaign.name}</div>
+                        <div className="text-sm text-gray-500 max-w-xs truncate">
+                          {campaign.description}
+                        </div>
+                        <div className="sm:hidden text-xs text-gray-400 mt-1">
+                          {campaign.brand?.name} • {format(new Date(campaign.start_date), "MMM dd")} - {format(new Date(campaign.end_date), "MMM dd, yyyy")}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <div className="font-medium">{campaign.brand?.name}</div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(campaign.status)}>
+                        {campaign.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <div className="text-sm">
+                        {format(new Date(campaign.start_date), "MMM dd")} - {format(new Date(campaign.end_date), "MMM dd, yyyy")}
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <div className="text-sm">
+                        {campaign.budget ? `₹${campaign.budget.toLocaleString()}` : "Not set"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <div className="flex items-center space-x-1">
+                        <Users className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm">{influencerCounts[campaign.id] || 0}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.location.href = `/campaigns/${campaign.id}`}
+                        className="w-full sm:w-auto"
+                      >
+                        Manage
+                      </Button>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <div className="flex items-center space-x-2">
+                        <Button variant="ghost" size="sm">
+                          <Share2 className="h-4 w-4" />
+                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openEditDialog(campaign)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle>Edit Campaign</DialogTitle>
+                              <DialogDescription>
+                                Update campaign information.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="col-span-1 sm:col-span-2">
+                                <Label htmlFor="edit-name">Campaign Name</Label>
+                                <Input
+                                  id="edit-name"
+                                  value={formData.name}
+                                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                  placeholder="Enter campaign name"
+                                />
+                              </div>
+                              <div className="col-span-1 sm:col-span-2">
+                                <Label htmlFor="edit-description">Description</Label>
+                                <Textarea
+                                  id="edit-description"
+                                  value={formData.description}
+                                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                  placeholder="Enter campaign description"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="edit-brand">Brand</Label>
+                                <Select value={formData.brand_id} onValueChange={(value) => setFormData({ ...formData, brand_id: value })}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select brand" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {brands.map((brand) => (
+                                      <SelectItem key={brand.id} value={brand.id}>
+                                        {brand.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label htmlFor="edit-status">Status</Label>
+                                <Select value={formData.status} onValueChange={(value: 'draft' | 'active' | 'completed' | 'paused') => setFormData({ ...formData, status: value })}>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="draft">Draft</SelectItem>
+                                    <SelectItem value="active">Active</SelectItem>
+                                    <SelectItem value="completed">Completed</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label htmlFor="edit-start_date">Start Date</Label>
+                                <Input
+                                  id="edit-start_date"
+                                  type="date"
+                                  value={formData.start_date}
+                                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="edit-end_date">End Date</Label>
+                                <Input
+                                  id="edit-end_date"
+                                  type="date"
+                                  value={formData.end_date}
+                                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                                />
+                              </div>
+                              <div className="col-span-1 sm:col-span-2">
+                                <Label htmlFor="edit-budget">Budget (₹)</Label>
+                                <Input
+                                  id="edit-budget"
+                                  type="number"
+                                  value={formData.budget}
+                                  onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                                  placeholder="Enter campaign budget"
+                                />
+                              </div>
+                            </div>
+                            <DialogFooter>
+                              <Button variant="outline" onClick={() => setEditingCampaign(null)}>
+                                Cancel
+                              </Button>
+                              <Button onClick={handleEditCampaign}>Update Campaign</Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteCampaign(campaign.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

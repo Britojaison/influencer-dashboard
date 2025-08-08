@@ -65,13 +65,13 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600">Manage your application preferences and configuration</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Settings</h1>
+        <p className="text-sm sm:text-base text-gray-600">Manage your application preferences and configuration</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Navigation */}
         <div className="lg:col-span-1">
           <Card>
@@ -99,7 +99,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Settings Content */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* Notifications */}
           <Card id="notifications">
             <CardHeader>
@@ -113,7 +113,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
                   <div>
                     <Label htmlFor="email-notifications">Email Notifications</Label>
                     <p className="text-sm text-gray-500">Receive notifications via email</p>
@@ -125,7 +125,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
                   <div>
                     <Label htmlFor="push-notifications">Push Notifications</Label>
                     <p className="text-sm text-gray-500">Receive browser push notifications</p>
@@ -137,7 +137,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
                   <div>
                     <Label htmlFor="campaign-updates">Campaign Updates</Label>
                     <p className="text-sm text-gray-500">Get notified about campaign status changes</p>
@@ -149,7 +149,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
                   <div>
                     <Label htmlFor="influencer-activity">Influencer Activity</Label>
                     <p className="text-sm text-gray-500">Get notified about new influencer posts</p>
@@ -194,7 +194,7 @@ export default function SettingsPage() {
                   </Select>
                 </div>
                 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
                   <div>
                     <Label htmlFor="compact-mode">Compact Mode</Label>
                     <p className="text-sm text-gray-500">Use a more compact layout</p>
@@ -222,7 +222,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
                   <div>
                     <Label htmlFor="auto-backup">Auto Backup</Label>
                     <p className="text-sm text-gray-500">Automatically backup your data weekly</p>
@@ -251,12 +251,12 @@ export default function SettingsPage() {
                   </Select>
                 </div>
                 
-                <div className="flex space-x-4">
-                  <Button onClick={handleExportData} variant="outline">
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                  <Button onClick={handleExportData} variant="outline" className="w-full sm:w-auto">
                     <Download className="h-4 w-4 mr-2" />
                     Export Data
                   </Button>
-                  <Button onClick={handleImportData} variant="outline">
+                  <Button onClick={handleImportData} variant="outline" className="w-full sm:w-auto">
                     <Upload className="h-4 w-4 mr-2" />
                     Import Data
                   </Button>
@@ -305,7 +305,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 
-                <Button variant="outline">Change Password</Button>
+                <Button variant="outline" className="w-full sm:w-auto">Change Password</Button>
               </div>
             </CardContent>
           </Card>
@@ -314,7 +314,7 @@ export default function SettingsPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex justify-end">
-                <Button onClick={handleSaveSettings}>
+                <Button onClick={handleSaveSettings} className="w-full sm:w-auto">
                   <Save className="h-4 w-4 mr-2" />
                   Save Settings
                 </Button>
