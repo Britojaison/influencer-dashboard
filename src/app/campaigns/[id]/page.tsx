@@ -457,7 +457,7 @@ export default function CampaignManagementPage() {
                   </div>
                   <div>
                     <Label htmlFor="platform">Platform</Label>
-                    <Select value={formData.platform} onValueChange={(value: any) => setFormData({ ...formData, platform: value })}>
+                    <Select value={formData.platform} onValueChange={(value: 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'facebook' | 'linkedin') => setFormData({ ...formData, platform: value })}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -491,7 +491,7 @@ export default function CampaignManagementPage() {
                   </div>
                   <div>
                     <Label htmlFor="status">Status</Label>
-                    <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
+                    <Select value={formData.status} onValueChange={(value: 'active' | 'inactive' | 'completed') => setFormData({ ...formData, status: value })}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -787,7 +787,7 @@ export default function CampaignManagementPage() {
                             </div>
                             <div>
                               <Label htmlFor="edit-platform">Platform</Label>
-                              <Select value={formData.platform} onValueChange={(value: any) => setFormData({ ...formData, platform: value })}>
+                              <Select value={formData.platform} onValueChange={(value: 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'facebook' | 'linkedin') => setFormData({ ...formData, platform: value })}>
                                 <SelectTrigger>
                                   <SelectValue />
                                 </SelectTrigger>
@@ -821,7 +821,7 @@ export default function CampaignManagementPage() {
                             </div>
                             <div>
                               <Label htmlFor="edit-status">Status</Label>
-                              <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
+                              <Select value={formData.status} onValueChange={(value: 'active' | 'inactive' | 'completed') => setFormData({ ...formData, status: value })}>
                                 <SelectTrigger>
                                   <SelectValue />
                                 </SelectTrigger>
@@ -1011,7 +1011,7 @@ export default function CampaignManagementPage() {
               {campaign?.summary ? (
                 <div dangerouslySetInnerHTML={{ __html: campaign.summary }} />
               ) : (
-                <p className="text-gray-500 italic">No summary added yet. Click "Edit Summary" to add one.</p>
+                <p className="text-gray-500 italic">No summary added yet. Click &quot;Edit Summary&quot; to add one.</p>
               )}
             </div>
           )}

@@ -38,7 +38,7 @@ export default function SettingsPage() {
     },
   });
 
-  const handleSettingChange = (category: string, key: string, value: any) => {
+  const handleSettingChange = (category: string, key: string, value: string | boolean) => {
     setSettings(prev => ({
       ...prev,
       [category]: {

@@ -6,13 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
   BarChart3, 
-  Users, 
   Calendar, 
   TrendingUp, 
-  Eye, 
-  Heart, 
-  MessageCircle, 
-  Share2,
   Plus,
   IndianRupee
 } from "lucide-react";
@@ -52,14 +47,7 @@ export default function DashboardPage() {
     loadDashboardData();
   }, []);
 
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M`;
-    } else if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}K`;
-    }
-    return num.toString();
-  };
+
 
   const formatCurrency = (num: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -117,7 +105,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600">Welcome back! Here's what's happening with your campaigns.</p>
+                     <p className="text-gray-600">Welcome back! Here&apos;s what&apos;s happening with your campaigns.</p>
         </div>
         <Link href="/campaigns">
           <Button>

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Add environment variables to Vercel
+echo "Adding environment variables to Vercel..."
+
+# Add NEXT_PUBLIC_SUPABASE_ANON_KEY
+echo "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnbW56YWNpeWVscHFxZHZ6bHNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0Nzc2MDYsImV4cCI6MjA3MDA1MzYwNn0.kfm2roHZTkWstDDh0ZVLadlJGqYcnJpaTsWGPhgZIVA" | vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY --scope=Production,Preview,Development
+
+# Add SUPABASE_SERVICE_ROLE_KEY
+echo "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnbW56YWNpeWVscHFxZHZ6bHNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDQ3NzYwNiwiZXhwIjoyMDcwMDUzNjA2fQ.vhvBNu9Iw23ZHz6dhrvFc2RLNlafja2WxJPrd1b-vlA" | vercel env add SUPABASE_SERVICE_ROLE_KEY --scope=Production,Preview,Development
+
+echo "Environment variables added successfully!"

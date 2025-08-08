@@ -254,7 +254,7 @@ export default function CampaignsPage() {
               </div>
               <div>
                 <Label htmlFor="status">Status</Label>
-                <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
+                <Select value={formData.status} onValueChange={(value: 'draft' | 'active' | 'completed' | 'paused') => setFormData({ ...formData, status: value })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -498,7 +498,7 @@ export default function CampaignsPage() {
                             </div>
                             <div>
                               <Label htmlFor="edit-status">Status</Label>
-                              <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
+                              <Select value={formData.status} onValueChange={(value: 'draft' | 'active' | 'completed' | 'paused') => setFormData({ ...formData, status: value })}>
                                 <SelectTrigger>
                                   <SelectValue />
                                 </SelectTrigger>

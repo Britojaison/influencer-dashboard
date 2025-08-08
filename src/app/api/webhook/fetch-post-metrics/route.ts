@@ -25,9 +25,9 @@ export async function POST(request: NextRequest) {
       });
       
       clearTimeout(timeoutId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       clearTimeout(timeoutId);
-      if (error.name === 'AbortError') {
+      if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('Webhook request timed out after 30 seconds');
       }
       throw error;
